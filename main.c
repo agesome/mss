@@ -20,7 +20,6 @@
  *      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  *      MA 02110-1301, USA.
  * 
- * 		TODO: Improve buttons handling >.<
  */
 
 #include <avr/io.h>
@@ -39,12 +38,12 @@ unsigned int nPos = 0, nFunc = 0, hour = 12, min = 0, sec = 0, usbCount = 0;
 unsigned int swDelay0 = 1, swDelay1 = 1, swTemp = 25;
 
 void init(void){
-	MCUCR = _BV(ISC11);// | _BV(ISC10) | _BV(ISC2);
+	MCUCR = _BV(ISC11); //interrupt sense control
 	GICR = _BV(INT1) | _BV(INT2); //interrupts
 	PORTD = _BV(PD3); PORTB = _BV(PB2);
 	
 	search_sensors();
-	//adc_setup();
+	adc_setup();
 	lcd_init(LCD_DISP_ON_BLINK);
 	
 	TIMSK = _BV(OCIE1A) | _BV(TOIE2);
@@ -63,14 +62,12 @@ void init(void){
 }
 
 ISR(INT2_vect, ISR_NOBLOCK ){
-	//switch display mode
 	if(!swDelay1){
 	swDelay1 = 1;
 	}
 }
 
 ISR(INT1_vect, ISR_NOBLOCK ){
-//set stuff according to selected display mode/function
 	if(!swDelay0){
 	swDelay0 = 1;
 	}
