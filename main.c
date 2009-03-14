@@ -56,7 +56,7 @@ void init(void){
 	
 	sei();
 	
-	timers on
+	/*timers on*/
 	TCCR1B = _BV(WGM12) | _BV(CS12);
 	TCCR2 = _BV(CS22) | _BV(CS21);
 }
@@ -112,7 +112,7 @@ int main(void){
 	while(1){
 	Temp = gtemp(0);
 	Hmd = mhumid(0);
-	sprintf(usb, "T: %2.1f ; H: %2.1f", (float)gtemp(0)/10, (float)mhumid(0)/10);
+	sprintf(usb, "T: %2.1f ; H: %2.1f", (double)gtemp(0)/10, (double)mhumid(0)/10);
 
 	/*process buttons*/
 	if(swDelay1){

@@ -1,8 +1,0 @@
-Startup sequence:
-1. init screen
-2. init usb
-3. enter main output mode(show temp/humidity)
-
-notes:
-+show help on F1
-	+print temp graph on 'g' and humidity graph on 'G'

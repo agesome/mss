@@ -5,7 +5,7 @@ CC = avr-gcc $(CFLAGS) $(INCLUDES) $(DEFS)
 CFLAGS = -O2 -mmcu=$(MCU) -Wl,-u,vfprintf -lprintf_flt -lm -Wall
 INCLUDES = -I usbdrv/ -I.
 FILES = usbdrv/*.c usbdrv/*.S *.c
-DEFS = -DF_CPU=12000000UL -DF_OSC=12000000UL -DXTAL=12000000UL -DOW_ONE_BUS
+DEFS = -DF_CPU=12000000UL -DOW_ONE_BUS
 
 main.hex: main.o main.elf main
 
@@ -19,5 +19,5 @@ main.elf: $(main)
 	$(CC) -o $@ *.o
 
 clean:
-	rm *.o main.elf
+	rm -f *.o main.elf main.hex
 

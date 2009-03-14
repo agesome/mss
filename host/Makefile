@@ -15,5 +15,5 @@ htc: $(htc)
 	$(CC) -o $@ *.o
 
 clean:
-	rm *.o 
+	rm -f *.o htc
 
