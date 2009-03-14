@@ -21,6 +21,8 @@
  *      MA 02110-1301, USA.
  * 
  */
+#define DISP_UPDATE_DELAY 150
+#define USB_REQ_LEN 64
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -33,18 +35,21 @@
 #include <usbdrv.h>
 #include <temperature.h>
 
-char disp[32], line[16], usb[16], *usbPtr = &disp[16];
-unsigned int nPos = 0, nFunc = 0, hour = 12, min = 0, sec = 0, usbCount = 0;
-unsigned int swDelay0 = 1, swDelay1 = 1, swTemp = 25;
+static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
+char usbBuff[USB_REQ_LEN];
+static unsigned short int nPos = 0, hour = 12, min = 0, sec = 0,
+usbCount = 0, swDelay0 = 0, swDelay1 = 0; //swTemp = 25;
+double temp[MAXTS], humid[MAXHS];
 
-void init(void){
+void
+init(void){
 	MCUCR = _BV(ISC11); //interrupt sense control
 	GICR = _BV(INT1) | _BV(INT2); //interrupts
 	PORTD = _BV(PD3); PORTB = _BV(PB2);
 	
 	search_sensors();
 	adc_setup();
-	lcd_init(LCD_DISP_ON_BLINK);
+	lcd_init(LCD_DISP_ON);
 	
 	TIMSK = _BV(OCIE1A) | _BV(TOIE2);
 	OCR1A = 46875; //one second
@@ -53,110 +58,115 @@ void init(void){
 	_delay_ms(100);
 	usbDeviceConnect();
 	usbInit();
-	
+
 	sei();
-	
 	/*timers on*/
 	TCCR1B = _BV(WGM12) | _BV(CS12);
 	TCCR2 = _BV(CS22) | _BV(CS21);
 }
 
 ISR(INT2_vect, ISR_NOBLOCK ){
-	if(!swDelay1){
-	swDelay1 = 1;
-	}
+	if(!swDelay1)
+	  swDelay1 = 1;
 }
 
 ISR(INT1_vect, ISR_NOBLOCK ){
-	if(!swDelay0){
-	swDelay0 = 1;
-	}
+	if(!swDelay0)
+	  swDelay0 = 1;
 }
 
 ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
 	sec++;
 	if(sec == 60){
-		sec = 0;
-		min++;
+	  sec = 0;
+	  min++;
 	}
 	if(min == 60){
-		min = 0;
-		hour++;
+	  min = 0;
+	  hour++;
 	}
-	if(hour == 24){
-		hour = 0;
-	}
+	if(hour == 24)
+	  hour = 0;
 }
 
 ISR(TIMER2_OVF_vect, ISR_NOBLOCK ){
 	usbCount++;
 	if(usbCount > 2){
-	usbPoll();
-	usbCount = 0;
+	  usbPoll();
+	  usbCount = 0;
 	}
 }
 
-usbMsgLen_t usbFunctionSetup(unsigned char setupData[8]){
+usbMsgLen_t
+usbFunctionSetup(unsigned char setupData[8]){
     usbRequest_t *rq = (void *)setupData;
-	usbMsgPtr = usb;
-	return 32;
+    
+    /*
+      0: send temperature value and humidity percentage;
+      1: send all data from eeprom and erease it;
+      2: do 1 but do not erease data;
+    */
+    switch(rq->bRequest){
+    case 2:
+      sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", temp[0], temp[1], temp[2], humid[0], humid[1]);
+      usbMsgPtr = (unsigned char *)usbBuff;
+	return USB_REQ_LEN;
+	break;
+    }
+    return 0;
 }
 
-int main(void){
-	
-	char *stext[] = {"T 1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
-	"Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set T1: %d", "Set time", "%.2d:%.2d \n"};
-	int Temp, Hmd;
+int
+main(void){
+  /* FIXME: store this in eeprom maybe?*/
+	const char *stext[] = {"T 1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
+	"Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set time", "%.2d:%.2d \n"};
+	short int i;
+
 	init();
 
 	while(1){
-	Temp = gtemp(0);
-	Hmd = mhumid(0);
-	sprintf(usb, "T: %2.1f ; H: %2.1f", (double)gtemp(0)/10, (double)mhumid(0)/10);
-
+	  for(i = 0; i <= MAXTS; i++)
+	    temp[i] = gtemp(i) / 10;
+	  for(i = 0; i <= MAXHS; i++)
+	    humid[i] = mhumid(i) / 10;
 	/*process buttons*/
 	if(swDelay1){
 		nPos++;
 		swDelay1 = 0;
 	}
+	if(nPos > 7)
+	  nPos = 0;
 	if(swDelay0){
-	switch(nPos){
-		case 5:
-		swTemp++;
-		break;
-		case 6:
-		hour++;
-		break;
-		case 7:
-		min++;
-		break;
+	switch(nPos - 5){
+	  //case 5:
+	  //swTemp++;
+	  //3break;
+	case 0:
+	  hour++;
+	  break;
+	case 1:
+	  min++;
+	  break;
 	}
-	//lcd_putc(0xff);
 	swDelay0 = 0;
 	}
 	
-	if(nPos == 8){
-		nPos = 0;
-	}
-	if(swTemp > 125){
-		swTemp = 0;
-	}
+	/*if(swTemp > 125)
+	  swTemp = 0;*/
 
-	sprintf(disp, stext[7], hour, min);
+	sprintf(disp, stext[6], hour, min);
 	
-
 	if(nPos <= 2)
-	sprintf(line, stext[nPos], (float)gtemp(nPos)/10);
+	sprintf(line, stext[nPos], temp[nPos]);
 	else if(nPos > 2 && nPos <= 4)
-	sprintf(line, stext[nPos], (float)mhumid(1)/10);
-	else if(nPos == 5)
-	sprintf(line, stext[nPos], swTemp);
-	else if(nPos > 5)
+	sprintf(line, stext[nPos], humid[nPos]);
+	else if(nPos >= 5)
+	  /*sprintf(line, stext[nPos], swTemp);
+	    else if(nPos > 5)*/
 	sprintf(line, "Set Time");
 
-	//sprintf(line, stext[0], (float)gtemp(0)/10);
-	//sprintf(line, stext[nPos], (float)mhumid(3)/10);
-
+	/*temperature regulation code, not needed yet*/
 /*
 	if(gtemp(0) < swTemp * 10 && !hOn){
 	PORTA |= _BV(PA4);
@@ -167,12 +177,10 @@ int main(void){
 	hOn = 0;
 	} 
 */
-
 	
 	strcpy(disp,strcat(disp,line));
 	lcd_clrscr();
 	lcd_puts(disp);	
-
-	_delay_ms(200);
+	_delay_ms(DISP_UPDATE_DELAY);
 	}
 }

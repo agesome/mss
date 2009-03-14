@@ -25,14 +25,12 @@
 #include <avr/interrupt.h>
 #include <string.h>
 #include <stdio.h>
-#include "onewire.h"
-#include "ds18x20.h"
-#include "delay.h"
+#include <onewire.h>
+#include <ds18x20.h>
+#include <delay.h>
+#include <temperature.h>
 
-
-#define MAXSENSORS 5
-
-uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE], nSensors;
+uint8_t gSensorIDs[MAXTS][OW_ROMCODE_SIZE], nSensors;
 
 void search_sensors(void)
 {
@@ -43,7 +41,7 @@ void search_sensors(void)
 	nSensors = 0;
 	
 	for( diff = OW_SEARCH_FIRST;
-		diff != OW_LAST_DEVICE && nSensors < MAXSENSORS ; )
+		diff != OW_LAST_DEVICE && nSensors < MAXTS ; )
 	{
 		DS18X20_find_sensor( &diff, &id[0] );
 		

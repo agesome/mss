@@ -18,10 +18,8 @@
  *      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  *      MA 02110-1301, USA.
  */
-
+#define MAXHS 2
 
 void adc_setup(void);
-
-void adc_startc(void);
-
+void adc_startc(short int pin);
 int mhumid(int f);

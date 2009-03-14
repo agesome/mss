@@ -22,8 +22,9 @@
 */
 
 #include <avr/io.h>
+#include <humidity.h>
 
-float rh, vol, r;
+static float rh, vol, r;
 
 void adc_setup(void){
 	ADMUX |= _BV(REFS0) | _BV(ADLAR);
@@ -50,12 +51,10 @@ void adc_startc(short int pin){
 		ADMUX |= 1 << 1 | 1 << 2;	
 }	//ADMUX |= _BV(REFS0);
 	adc_setup();
-
 	ADCSRA |= _BV(ADSC); //start conversion, pin is set
-
 }
-int mhumid(int pin){
-	
+
+int mhumid(int pin){	
 	adc_startc(pin);
 	vol = (5.07 / 256) * ADCH;
 	r = (4600 * vol) / (5.07 - vol);
@@ -68,7 +67,6 @@ int mhumid(int pin){
 		rh = 75 - r / 3333;
 	else if(r <= 10000 && r >= 200)
 		rh = 95 - r / 490;
-
 	
 	return rh * 10;
 }
