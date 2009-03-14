@@ -1,0 +1,115 @@
+Cmp-Mod V01 Created by CVpcb (20080825) date = 10/2/2009-14:17:27
+
+BeginCmp
+TimeStamp = /49904F15;
+Reference = C1;
+ValeurCmp = C1;
+IdModule  = C1;
+EndCmp
+
+BeginCmp
+TimeStamp = /49904F19;
+Reference = C2;
+ValeurCmp = C2;
+IdModule  = C1;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907C3B;
+Reference = C3;
+ValeurCmp = C3;
+IdModule  = CP36V;
+EndCmp
+
+BeginCmp
+TimeStamp = /49908152;
+Reference = D1;
+ValeurCmp = D1;
+IdModule  = D3;
+EndCmp
+
+BeginCmp
+TimeStamp = /4990814E;
+Reference = D2;
+ValeurCmp = D2;
+IdModule  = D3;
+EndCmp
+
+BeginCmp
+TimeStamp = /49904DED;
+Reference = IC1;
+ValeurCmp = MEGA32-P;
+IdModule  = avr-4-DIL40;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907913;
+Reference = LCD1;
+ValeurCmp = LCD1;
+IdModule  = lcd_2x16_led_backlight-HY-1602F;
+EndCmp
+
+BeginCmp
+TimeStamp = /49906E64;
+Reference = P1;
+ValeurCmp = CONN1;
+IdModule  = pin_array_4x2;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907FFD;
+Reference = R1;
+ValeurCmp = R1;
+IdModule  = R1;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907FFA;
+Reference = R2;
+ValeurCmp = R2;
+IdModule  = R1;
+EndCmp
+
+BeginCmp
+TimeStamp = /499080E3;
+Reference = R3;
+ValeurCmp = R3;
+IdModule  = R1;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907975;
+Reference = R4;
+ValeurCmp = R4;
+IdModule  = resistor-bourns-P250SQ;
+EndCmp
+
+BeginCmp
+TimeStamp = /49908303;
+Reference = SW1;
+ValeurCmp = SW1;
+IdModule  = SW_PUSH;
+EndCmp
+
+BeginCmp
+TimeStamp = /49908320;
+Reference = SW2;
+ValeurCmp = SW2;
+IdModule  = SW_PUSH;
+EndCmp
+
+BeginCmp
+TimeStamp = /49904E58;
+Reference = X1;
+ValeurCmp = RES1;
+IdModule  = SW_PUSH;
+EndCmp
+
+BeginCmp
+TimeStamp = /49907EED;
+Reference = X2;
+ValeurCmp = USB;
+IdModule  = con-usb-USB-A-H;
+EndCmp
+
+EndListe
