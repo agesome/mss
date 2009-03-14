@@ -32,25 +32,16 @@ void sText(const char *str){
   wrefresh(msgs);
 }
 
-/*void help(void){
-  WINDOW *w = newwin(LINES, COLS, 0, 0);
-  wprintw(w, helpText);
-  wrefresh(w);
-  getch();
-  delwin(w);
-  refresh();
-  }*/
-
 void init(void){
   initscr();
-  cbreak();
-  noecho();
+  //cbreak();
+  //noecho();
   keypad(stdscr, TRUE);
   mvprintw(0, COLS/2-strlen(welc), welc);
-  refresh();
+  //refresh();
   
   msgs = newwin(10, COLS, LINES - 10, 0);
-  
+  keypad(msgs, TRUE);
   scrollok(msgs, TRUE);
   idlok(msgs, TRUE);
   clearok(msgs, TRUE);
@@ -58,14 +49,18 @@ void init(void){
 
   box(msgs, 0, 0);
   wmove(msgs, 1, 2);
+  refresh();
+  noecho();
+  cbreak();
   wrefresh(msgs);
 
   /*welcome message*/
-  sText("This is HT217 interface version " VERSION". Press F1 for help.\n");
+  sText("This is HT217 interface version " VERSION ". Press F1 for help.\n");
 }
 
 
-int main(int argc, char *argv[]){
+int
+main(int argc, char *argv[]){
   int btn, n = 0;
   char *str = (char *)malloc(32);
 
@@ -76,9 +71,10 @@ int main(int argc, char *argv[]){
 	  btn = getch();
 	if(btn == 'q')
 	  break;
-	else if(btn == KEY_F(1))
+	if(btn == KEY_F(1)){
 	  sprintf(str, "WHEE %d", n++);
 	  sText(str);
+	}
 	}
 
 	endwin();
