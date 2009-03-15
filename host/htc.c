@@ -3,10 +3,19 @@
 #include <string.h>
 #include <iface.h>
 #include <htc.h>
+#define MAXTS 3
+#define MAXHS 2
 
 const char welc[] = "HT217 interface";
-extern int temp[];
+extern char *recvBuffer;
+double tData[MAXTS], hData[MAXHS];
 WINDOW *msgs;
+
+void
+parseRecv(void){
+  sscanf(recvBuffer, "%2.1f %2.1f %2.1f %2.1f %2.1f", &tData[0], &tData[1], &tData[2], &hData[0], &hData[1]);
+}
+
 
 /*print str in statustext box*/
 void sText(const char *str){
@@ -33,27 +42,25 @@ void sText(const char *str){
 }
 
 void init(void){
+  /*stdscr part*/
   initscr();
-  //cbreak();
-  //noecho();
+  cbreak();
+  noecho();
   keypad(stdscr, TRUE);
   mvprintw(0, COLS/2-strlen(welc), welc);
-  //refresh();
+  refresh();
   
+  /*message box part*/
   msgs = newwin(10, COLS, LINES - 10, 0);
-  keypad(msgs, TRUE);
+  //keypad(msgs, TRUE);
   scrollok(msgs, TRUE);
   idlok(msgs, TRUE);
   clearok(msgs, TRUE);
-  wsetscrreg(msgs, 1, 8);
-
+  wsetscrreg(msgs, 1, 8); 
   box(msgs, 0, 0);
   wmove(msgs, 1, 2);
-  refresh();
-  noecho();
-  cbreak();
   wrefresh(msgs);
-
+  
   /*welcome message*/
   sText("This is HT217 interface version " VERSION ". Press F1 for help.\n");
 }
@@ -61,22 +68,21 @@ void init(void){
 
 int
 main(int argc, char *argv[]){
-  int btn, n = 0;
-  char *str = (char *)malloc(32);
+  int btn;
 
-	init();
+  init();
+  if(!(*argv[1] == '0'))
+  usbInit();
 
-	while(1){
-	  refresh();
-	  btn = getch();
-	if(btn == 'q')
-	  break;
-	if(btn == KEY_F(1)){
-	  sprintf(str, "WHEE %d", n++);
-	  sText(str);
-	}
-	}
-
-	endwin();
-	return 0;
+  while(1){
+    refresh();
+    btn = getch();
+    if(btn == 'q')
+      break;
+    else if(btn == KEY_F(1))
+      sText(helpText);
+  }
+  
+  endwin();
+  return 0;
 }

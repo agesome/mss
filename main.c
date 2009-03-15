@@ -21,7 +21,7 @@
  *      MA 02110-1301, USA.
  * 
  */
-#define DISP_UPDATE_DELAY 150
+#define DISP_UPDATE_DELAY 50
 #define USB_REQ_LEN 64
 
 #include <avr/io.h>
@@ -38,8 +38,8 @@
 static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
 char usbBuff[USB_REQ_LEN];
 static unsigned short int nPos = 0, hour = 12, min = 0, sec = 0,
-usbCount = 0, swDelay0 = 0, swDelay1 = 0; //swTemp = 25;
-double temp[MAXTS], humid[MAXHS];
+usbCount = 0, swDelay0 = 0, swDelay1 = 0;
+static double tData[MAXTS], hData[MAXHS];
 
 void
 init(void){
@@ -108,9 +108,9 @@ usbFunctionSetup(unsigned char setupData[8]){
     */
     switch(rq->bRequest){
     case 2:
-      sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", temp[0], temp[1], temp[2], humid[0], humid[1]);
+      sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", tData[0], tData[1], tData[2], hData[0], hData[1]);
       usbMsgPtr = (unsigned char *)usbBuff;
-	return USB_REQ_LEN;
+      return strlen(usbBuff + 1);
 	break;
     }
     return 0;
@@ -118,69 +118,48 @@ usbFunctionSetup(unsigned char setupData[8]){
 
 int
 main(void){
-  /* FIXME: store this in eeprom maybe?*/
-	const char *stext[] = {"T 1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
-	"Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set time", "%.2d:%.2d \n"};
-	short int i;
-
-	init();
-
-	while(1){
-	  for(i = 0; i <= MAXTS; i++)
-	    temp[i] = gtemp(i) / 10;
-	  for(i = 0; i <= MAXHS; i++)
-	    humid[i] = mhumid(i) / 10;
-	/*process buttons*/
-	if(swDelay1){
-		nPos++;
-		swDelay1 = 0;
-	}
-	if(nPos > 7)
-	  nPos = 0;
-	if(swDelay0){
-	switch(nPos - 5){
-	  //case 5:
-	  //swTemp++;
-	  //3break;
-	case 0:
-	  hour++;
-	  break;
-	case 1:
-	  min++;
-	  break;
-	}
-	swDelay0 = 0;
-	}
-	
-	/*if(swTemp > 125)
-	  swTemp = 0;*/
-
-	sprintf(disp, stext[6], hour, min);
-	
-	if(nPos <= 2)
-	sprintf(line, stext[nPos], temp[nPos]);
-	else if(nPos > 2 && nPos <= 4)
-	sprintf(line, stext[nPos], humid[nPos]);
-	else if(nPos >= 5)
-	  /*sprintf(line, stext[nPos], swTemp);
-	    else if(nPos > 5)*/
-	sprintf(line, "Set Time");
-
-	/*temperature regulation code, not needed yet*/
-/*
-	if(gtemp(0) < swTemp * 10 && !hOn){
-	PORTA |= _BV(PA4);
-	hOn = 1;
-	}
-	if(gtemp(0) > swTemp * 10 && hOn){
-	PORTA ^= _BV(PA4); 
-	hOn = 0;
-	} 
-*/
-	
-	strcpy(disp,strcat(disp,line));
-	lcd_clrscr();
-	lcd_puts(disp);	
-	_delay_ms(DISP_UPDATE_DELAY);
-	}
+  const char *stext[] = {"T 1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
+			 "Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set time", "%.2d:%.2d \n"};
+  int i;
+  
+  init();
+  
+  while(1){
+    for(i = 0; i <= MAXTS; i++)
+      tData[i] = gtemp(i) / 10;
+    for(i = 0; i <= MAXHS; i++)
+      hData[i] = mhumid(i) / 10;
+    /*process buttons*/
+    if(swDelay1){
+      nPos++;
+      swDelay1 = 0;
+    }
+    if(nPos > 6)
+      nPos = 0;
+    if(swDelay0){
+      switch(nPos - 4){
+      case 0:
+	hour++;
+	break;
+      case 1:
+	min++;
+	break;
+      }
+      swDelay0 = 0;
+    }
+    
+    sprintf(disp, stext[6], hour, min);
+    
+    if(nPos <= 2)
+      sprintf(line, stext[nPos], tData[nPos]);
+    else if(nPos >= 3 && nPos <= 4)
+      sprintf(line, stext[nPos], hData[nPos]);
+    else if(nPos >= 6)
+      sprintf(line, "Set Time");
+    
+    strcpy(disp,strcat(disp,line));
+    lcd_clrscr();
+    lcd_puts(disp);
+    _delay_ms(DISP_UPDATE_DELAY);
+  }
 }

@@ -1,2 +1,2 @@
 #define VERSION "0.1"
-const char helpText[] = "\t\tHT217 Help\n \t whee! :D";
+const char helpText[] = "F1: This help text. q: quit.\n";
