@@ -10,7 +10,7 @@
 #define USB_ERROR_IO 3
 #define VNAME "evgeny217.org.ua"
 #define PNAME "HT_217"
-#define DEV_REQ_LEN 32
+#define DEV_REQ_LEN 36
 #define DEV_TIMEOUT 1000
 
 char *recvBuffer;
@@ -132,8 +132,8 @@ char
 		      handle,
 		      USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, // bRequestType
 		      2, // bRequest
-		      2, // wValue
-		      2, // wIndex
+		      0, // wValue
+		      0, // wIndex
 		      recvBuffer, // pointer to destination buffer
 		      DEV_REQ_LEN, // wLength
 		      DEV_TIMEOUT

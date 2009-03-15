@@ -22,7 +22,7 @@
  * 
  */
 #define DISP_UPDATE_DELAY 50
-#define USB_REQ_LEN 64
+#define USB_REQ_LEN 32
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -125,10 +125,15 @@ main(void){
   init();
   
   while(1){
-    for(i = 0; i <= MAXTS; i++)
-      tData[i] = gtemp(i) / 10;
-    for(i = 0; i <= MAXHS; i++)
-      hData[i] = mhumid(i) / 10;
+    /* quite ugly, needs a fix */
+    for(i = 0; i <= MAXTS; i++){
+      tData[i] = (double)gtemp(i);
+      tData[i] /= 10;
+    }
+    for(i = 0; i <= MAXHS; i++){
+      hData[i] = (double)mhumid(i);
+      hData[i] /= 10;
+    }
     /*process buttons*/
     if(swDelay1){
       nPos++;

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <iface.h>
 #include <htc.h>
+#include <time.h>
 #define MAXTS 3
 #define MAXHS 2
 
@@ -69,9 +70,9 @@ void init(void){
 int
 main(int argc, char *argv[]){
   int btn;
+  clock_t execT;
 
   init();
-  if(!(*argv[1] == '0'))
   usbInit();
 
   while(1){
