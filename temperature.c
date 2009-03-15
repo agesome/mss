@@ -23,11 +23,11 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include <string.h>
 #include <stdio.h>
 #include <onewire.h>
 #include <ds18x20.h>
-#include <delay.h>
 #include <temperature.h>
 
 uint8_t gSensorIDs[MAXTS][OW_ROMCODE_SIZE], nSensors;
@@ -65,7 +65,7 @@ int gtemp(int ns){
 	uint8_t subzero, cel, cel_frac_bits;
 	
 	DS18X20_start_meas( DS18X20_POWER_EXTERN, NULL );
-	delay_ms(DS18B20_TCONV_12BIT);
+	_delay_ms(DS18B20_TCONV_12BIT);
 	DS18X20_read_meas_single(gSensorIDs[ns][0], &subzero, &cel, &cel_frac_bits);
 	
 	return DS18X20_temp_to_decicel(subzero, cel, cel_frac_bits);

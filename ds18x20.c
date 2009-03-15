@@ -21,10 +21,10 @@ changelog:
 #include "onewire.h"
 #include "crc8.h"
 
-#ifdef DS18X20_EEPROMSUPPORT
+//#ifdef DS18X20_EEPROMSUPPORT
 // for 10ms delay in copy scratchpad
-#include "delay.h"
-#endif
+//#include "delay.h"
+//#endif
 
 /* 
    convert raw value from DS18x20 to Celsius

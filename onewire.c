@@ -11,7 +11,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "delay.h"
+#include <util/delay.h>
 #include "onewire.h"
 
 #define OW_GET_IN()   ( OW_IN & (1<<OW_PIN))
@@ -45,7 +45,7 @@ uint8_t ow_reset(void)
 	OW_OUT_LOW(); // disable internal pull-up (maybe on from parasite)
 	OW_DIR_OUT(); // pull OW-Pin low for 480us
 	
-	delay_us(480);
+	_delay_us(480);
 	
 	sreg=SREG;
 	cli();
@@ -53,7 +53,7 @@ uint8_t ow_reset(void)
 	// set Pin as input - wait for clients to pull low
 	OW_DIR_IN(); // input
 	
-	delay_us(66);
+	_delay_us(66);
 	err = OW_GET_IN();		// no presence detect
 	// nobody pulled to low, still high
 	
@@ -61,7 +61,7 @@ uint8_t ow_reset(void)
 	
 	// after a delay the clients should release the line
 	// and input-pin gets back to high due to pull-up-resistor
-	delay_us(480-66);
+	_delay_us(480-66);
 	if( OW_GET_IN() == 0 )		// short circuit
 		err = 1;
 	
@@ -84,15 +84,15 @@ uint8_t ow_bit_io( uint8_t b )
 	
 	OW_DIR_OUT(); // drive bus low
 	
-	delay_us(1); // Recovery-Time wuffwuff was 1
+	_delay_us(1); // Recovery-Time wuffwuff was 1
 	if ( b ) OW_DIR_IN(); // if bit is 1 set bus high (by ext. pull-up)
 		
 	// wuffwuff delay was 15uS-1 see comment above
-	delay_us(15-1-OW_CONF_DELAYOFFSET);
+	_delay_us(15-1-OW_CONF_DELAYOFFSET);
 		
 	if( OW_GET_IN() == 0 ) b = 0;  // sample at end of read-timeslot
 	
-	delay_us(60-15);
+	_delay_us(60-15);
 	OW_DIR_IN();
 	
 	SREG=sreg; // sei();
