@@ -32,7 +32,7 @@
 
 uint8_t gSensorIDs[MAXTS][OW_ROMCODE_SIZE], nSensors;
 
-void search_sensors(void)
+int search_sensors(void)
 {
 	uint8_t i;
 	uint8_t id[OW_ROMCODE_SIZE];
@@ -58,6 +58,7 @@ void search_sensors(void)
 		
 		nSensors++;
 	}
+	return nSensors;
 	
 }
 

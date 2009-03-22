@@ -21,8 +21,11 @@
  *      MA 02110-1301, USA.
  * 
  */
-#define DISP_UPDATE_DELAY 50
+#define MAIN_UPDATE_DELAY 5
 #define USB_REQ_LEN 32
+#define TEMP_REG_SENSOR 0
+#define TEMP_REG_PORT PORTA
+#define TEMP_REG_PIN PA4
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -37,23 +40,24 @@
 
 static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
 char usbBuff[USB_REQ_LEN];
-static unsigned short int nPos = 0, hour = 12, min = 0, sec = 0,
-usbCount = 0, swDelay0 = 0, swDelay1 = 0;
+static unsigned short nPos = 3, hour = 12, min = 0, sec = 0,
+  usbCount = 0, swDelay0 = 0, swDelay1 = 0, nSensors = 0;
 static double tData[MAXTS], hData[MAXHS];
 
 void
-init(void){
+setup(void){
 	MCUCR = _BV(ISC11); //interrupt sense control
 	GICR = _BV(INT1) | _BV(INT2); //interrupts
 	PORTD = _BV(PD3); PORTB = _BV(PB2);
 	
-	search_sensors();
-	adc_setup();
+	nSensors = search_sensors();
+	//	adc_setup();
 	lcd_init(LCD_DISP_ON);
 	
 	TIMSK = _BV(OCIE1A) | _BV(TOIE2);
 	OCR1A = 46875; //one second
 	
+	/* re-enumerate */
 	usbDeviceDisconnect();
 	_delay_ms(100);
 	usbDeviceConnect();
@@ -68,14 +72,16 @@ init(void){
 ISR(INT2_vect, ISR_NOBLOCK ){
 	if(!swDelay1)
 	  swDelay1 = 1;
+/*  	GICR &= GICR ^ _BV(INT2); */
 }
 
 ISR(INT1_vect, ISR_NOBLOCK ){
 	if(!swDelay0)
 	  swDelay0 = 1;
+/* 	GICR &= GICR ^ _BV(INT1); */
 }
 
-ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
+ISR(TIMER1_COMPA_vect){
 	sec++;
 	if(sec == 60){
 	  sec = 0;
@@ -116,55 +122,110 @@ usbFunctionSetup(unsigned char setupData[8]){
     return 0;
 }
 
+void fillData(double tData[], double hData[]){
+  unsigned short i;
+  if(tData != NULL)
+  for(i = 0; i < nSensors; i++){
+    tData[i] = (double)gtemp(i);
+    tData[i] /= 10;
+  }
+  if(hData != NULL)
+  for(i = 0; i <= MAXHS; i++){
+    hData[i] = (double)mhumid(i);
+    hData[i] /= 10;
+  }
+}
+
+void sensorShow(void){
+  lcd_clrscr();
+  lcd_puts("Sensor detection...\n");
+  while(!swDelay1 && !swDelay0){
+    double dtData[MAXTS];
+    unsigned short i;
+    fillData(tData, NULL);
+    _delay_ms(100);
+    fillData(dtData, NULL);
+    for(i = 0; i < nSensors; i++){
+      if(tData[i] < dtData[i])
+	sprintf(disp, "Sensor %d up!", i);
+      else if(tData[i] > dtData[i])
+	sprintf(disp, "Sensor %d down!", i);
+    }
+    lcd_clrscr();
+    lcd_puts(disp);
+  }
+}
+    
+
 int
 main(void){
-  const char *stext[] = {"T 1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
-			 "Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set time", "%.2d:%.2d \n"};
-  int i;
+  const char *stext[] = {"T1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
+			 "Fi 1, %%: %d", "Fi 2, %%: %2.1f", "Set temp.: %d", "Set time", "%.2d:%.2d:%.2d \n"};
+  unsigned short hOn = 0, swTemp = 25;
   
-  init();
+  setup();
   
   while(1){
-    /* quite ugly, needs a fix */
-    for(i = 0; i <= MAXTS; i++){
-      tData[i] = (double)gtemp(i);
-      tData[i] /= 10;
+    fillData(tData, hData);
+/*     process buttons */
+    if(swDelay1 && swDelay0){
+      swDelay1 = swDelay0 = 0;
+      sensorShow();
     }
-    for(i = 0; i <= MAXHS; i++){
-      hData[i] = (double)mhumid(i);
-      hData[i] /= 10;
-    }
-    /*process buttons*/
+    
     if(swDelay1){
       nPos++;
       swDelay1 = 0;
+/*       GICR |= _BV(INT2); */
     }
-    if(nPos > 6)
+    if(nPos > 7)
       nPos = 0;
     if(swDelay0){
+/*       GICR |= _BV(INT1); */
       switch(nPos - 4){
-      case 0:
+      case 1:
+	swTemp++;
+	break;
+      case 2:
 	hour++;
 	break;
-      case 1:
+      case 3:
 	min++;
 	break;
       }
       swDelay0 = 0;
     }
     
-    sprintf(disp, stext[6], hour, min);
+    sprintf(disp, stext[7], hour, min, sec);
     
-    if(nPos <= 2)
+    switch(nPos){
+    case 0: case 1: case 2:
       sprintf(line, stext[nPos], tData[nPos]);
-    else if(nPos >= 3 && nPos <= 4)
-      sprintf(line, stext[nPos], hData[nPos]);
-    else if(nPos >= 6)
-      sprintf(line, "Set Time");
+      break;
+    case 3: case 4:
+      sprintf(line, stext[nPos], mhumid(1));
+      break;
+    case 5:
+      sprintf(line, stext[nPos], swTemp);
+      break;
+    case 6:
+      sprintf(line, stext[nPos]);
+      break;
+    }
+      
+    /*temperature regulation*/
+    if(tData[TEMP_REG_SENSOR] < swTemp && !hOn){
+      TEMP_REG_PORT |= _BV(TEMP_REG_PIN);
+      hOn = 1;
+    }
+    if(gtemp(0) > swTemp * 10 && hOn){
+      TEMP_REG_PORT ^= _BV(TEMP_REG_PIN);
+      hOn = 0;
+    }
     
     strcpy(disp,strcat(disp,line));
     lcd_clrscr();
     lcd_puts(disp);
-    _delay_ms(DISP_UPDATE_DELAY);
+    _delay_ms(MAIN_UPDATE_DELAY);
   }
 }

@@ -31,8 +31,8 @@ void adc_setup(void){
 	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS1) | _BV(ADEN); 
 }
 
-void adc_startc(short int pin){
-	ADMUX = ADMUX >> 5; ADMUX = ADMUX << 5; //reset pin setting bits
+void adc_startc(short pin){
+	ADMUX = 0; //reset pin setting bits
 	//set measurement pin
 	switch(pin){
 		case 0:
@@ -49,12 +49,12 @@ void adc_startc(short int pin){
 		ADMUX |= 1 | 1 << 2;
 		case 6:
 		ADMUX |= 1 << 1 | 1 << 2;	
-}	//ADMUX |= _BV(REFS0);
+	}	//ADMUX |= _BV(REFS0);
 	adc_setup();
 	ADCSRA |= _BV(ADSC); //start conversion, pin is set
 }
 
-int mhumid(int pin){	
+int mhumid(short pin){	
 	adc_startc(pin);
 	vol = (5.07 / 256) * ADCH;
 	r = (4600 * vol) / (5.07 - vol);
