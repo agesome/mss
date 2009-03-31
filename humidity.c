@@ -24,11 +24,9 @@
 #include <avr/io.h>
 #include <humidity.h>
 
-static float rh, vol, r;
-
 void adc_setup(void){
 	ADMUX |= _BV(REFS0) | _BV(ADLAR);
-	ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS1) | _BV(ADEN); 
+	ADCSRA |= _BV(ADPS2) | _BV(ADPS0) | _BV(ADEN); 
 }
 
 void adc_startc(short pin){
@@ -38,35 +36,39 @@ void adc_startc(short pin){
 		case 0:
 		break;
 		case 1:
-		ADMUX |= 1;
+		ADMUX = 1;
 		case 2:
-		ADMUX |= 1 << 1;
+		ADMUX = 1 << 1;
 		case 3:
-		ADMUX |= 1 | 1 << 1;
+		ADMUX = 1 | 1 << 1;
 		case 4:
-		ADMUX |= 1 << 2;
+		ADMUX = 1 << 2;
 		case 5:
-		ADMUX |= 1 | 1 << 2;
+		ADMUX = 1 | 1 << 2;
 		case 6:
-		ADMUX |= 1 << 1 | 1 << 2;	
-	}	//ADMUX |= _BV(REFS0);
+		ADMUX = 1 << 1 | 1 << 2;	
+	}
 	adc_setup();
 	ADCSRA |= _BV(ADSC); //start conversion, pin is set
+	while(ADCSRA & _BV(ADSC))
+	  ;;
 }
 
-int mhumid(short pin){	
+int mhumid(short pin){
+  float u, relH, res;
+  
 	adc_startc(pin);
-	vol = (5.07 / 256) * ADCH;
-	r = (4600 * vol) / (5.07 - vol);
+	u = (5.07 / 256) * ADCH;
+	res = (4600 * u) / (5.07 - u);
 	
-	if(r >= 1000000)
-		rh = 30 - r / 529100;
-	else if(r >= 100000 && r <= 1000000)
-		rh = 48 - r / 50000;
-	if(r <= 100000 && r >= 10000)
-		rh = 75 - r / 3333;
-	else if(r <= 10000 && r >= 200)
-		rh = 95 - r / 490;
+	if(res >= 1000000)
+		relH = 30 - res / 529100;
+	else if(res >= 100000 && res <= 1000000)
+		relH = 48 - res / 50000;
+	else if(res <= 100000 && res >= 10000)
+		relH = 75 - res / 3333;
+	else if(res <= 10000 && res >= 200)
+		relH = 95 - res / 490;
 	
-	return rh * 10;
+	return relH * 10;
 }

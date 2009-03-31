@@ -22,7 +22,7 @@
  * 
  */
 #define MAIN_UPDATE_DELAY 5
-#define USB_REQ_LEN 32
+#define USB_REQ_LEN 64
 #define TEMP_REG_SENSOR 0
 #define TEMP_REG_PORT PORTA
 #define TEMP_REG_PIN PA4
@@ -81,7 +81,7 @@ ISR(INT1_vect, ISR_NOBLOCK ){
 /* 	GICR &= GICR ^ _BV(INT1); */
 }
 
-ISR(TIMER1_COMPA_vect){
+ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
 	sec++;
 	if(sec == 60){
 	  sec = 0;
@@ -95,12 +95,12 @@ ISR(TIMER1_COMPA_vect){
 	  hour = 0;
 }
 
-ISR(TIMER2_OVF_vect, ISR_NOBLOCK ){
-	usbCount++;
-	if(usbCount > 2){
+ISR(TIMER2_OVF_vect){
+/* 	usbCount++; */
+/* 	if(usbCount > 1){ */
 	  usbPoll();
-	  usbCount = 0;
-	}
+/* 	  usbCount = 0; */
+/* 	} */
 }
 
 usbMsgLen_t
@@ -113,13 +113,11 @@ usbFunctionSetup(unsigned char setupData[8]){
       2: do 1 but do not erease data;
     */
     switch(rq->bRequest){
-    case 2:
+    case 0:
       sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", tData[0], tData[1], tData[2], hData[0], hData[1]);
       usbMsgPtr = (unsigned char *)usbBuff;
-      return strlen(usbBuff + 1);
-	break;
     }
-    return 0;
+    return USB_REQ_LEN;
 }
 
 void fillData(double tData[], double hData[]){

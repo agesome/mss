@@ -10,7 +10,7 @@
 #define USB_ERROR_IO 3
 #define VNAME "evgeny217.org.ua"
 #define PNAME "HT_217"
-#define DEV_REQ_LEN 36
+#define DEV_REQ_LEN 64
 #define DEV_TIMEOUT 1000
 
 char *recvBuffer;
@@ -66,8 +66,7 @@ static int usbOpenDevice(usb_dev_handle **device, int vendor, char *vendorName, 
 	handle = usb_open(dev); /* we need to open the device in order to query strings */
 	if(!handle){
 	  errorCode = USB_ERROR_ACCESS;
-	  sprintf(tmpBuf, "Warning: cannot open USB device: %s\n", usb_strerror());
-	  sText(tmpBuf);
+	  fprintf(stderr, "Warning: cannot open USB device: %s\n", usb_strerror());
 	  continue;
 	}
 	if(vendorName == NULL && productName == NULL){  /* name does not matter */
@@ -77,8 +76,7 @@ static int usbOpenDevice(usb_dev_handle **device, int vendor, char *vendorName, 
 	len = usbGetStringAscii(handle, dev->descriptor.iManufacturer, 0x0409, string, sizeof(string));
 	if(len < 0){
 	  errorCode = USB_ERROR_IO;
-	  sprintf(tmpBuf, "Warning: cannot query manufacturer for device: %s\n", usb_strerror());
-	  sText(tmpBuf);
+	  fprintf(stderr, "Warning: cannot query manufacturer for device: %s\n", usb_strerror());
 	}else{
 	  errorCode = USB_ERROR_NOTFOUND;
 	  /* fprintf(stderr, "seen device from vendor ->%s<-\n", string); */
@@ -86,9 +84,8 @@ static int usbOpenDevice(usb_dev_handle **device, int vendor, char *vendorName, 
 	    len = usbGetStringAscii(handle, dev->descriptor.iProduct, 0x0409, string, sizeof(string));
 	    if(len < 0){
 	      errorCode = USB_ERROR_IO;
-	      sprintf(tmpBuf, "Warning: cannot query product for device: %s\n", usb_strerror());
-	      sText(tmpBuf);
-	    }else{
+	      fprintf(stderr, "Warning: cannot query product for device: %s\n", usb_strerror());
+       	    }else{
 	      errorCode = USB_ERROR_NOTFOUND;
 	      /* fprintf(stderr, "seen product ->%s<-\n", string); */
 	      if(strcmp(string, productName) == 0)
@@ -113,14 +110,8 @@ static int usbOpenDevice(usb_dev_handle **device, int vendor, char *vendorName, 
 
 int
 usbInit(void){
-  
-  if(usbOpenDevice(&handle, USBDEV_SHARED_VENDOR, VNAME, USBDEV_SHARED_PRODUCT, PNAME)){
-    sText("Warning: Cannot open device\n");
+  if(usbOpenDevice(&handle, USBDEV_SHARED_VENDOR, VNAME, USBDEV_SHARED_PRODUCT, PNAME))
     return 1;
-  }
-  
-  /*usb_set_configuration(handle, 1);
-    usb_claim_interface(handle, 0);*/
   return 0;
 }
 
@@ -128,18 +119,15 @@ char
 *usbData(void){
   recvBuffer = malloc(DEV_REQ_LEN);
   
-  if( usb_control_msg(
-		      handle,
-		      USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, // bRequestType
-		      2, // bRequest
-		      0, // wValue
-		      0, // wIndex
-		      recvBuffer, // pointer to destination buffer
-		      DEV_REQ_LEN, // wLength
-		      DEV_TIMEOUT
-		      ) != DEV_REQ_LEN)
-    sText("Warning, recieved more/less data than expected\n");
-  return recvBuffer;
+  usb_control_msg(handle,
+		  USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, // bRequestType
+		  0, // bRequest
+		  0, // wValue
+		  0, // wIndex
+		  recvBuffer, // pointer to destination buffer
+		  DEV_REQ_LEN, // wLength
+		  DEV_TIMEOUT);
+    return recvBuffer;
 }
 
 	

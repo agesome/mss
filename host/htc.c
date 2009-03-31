@@ -85,25 +85,32 @@ main(int argc, char *argv[]){
   int btn;
   clock_t execT, delta;
   char tmp[256];
+  
   execT = clock() / CLOCKS_PER_SEC;
   init();
-  // usbInit();
-  //sText(usbData());
-
+  if(usbInit()){
+    endwin();
+    fprintf(stderr, "Problems opening device, exiting.\n");
+    return 1;
+  }
+  
   while(1){
-    //updateData();
-    /* if((delta = clock() / CLOCKS_PER_SEC) - execT >= 1){
+    if((delta = clock() / CLOCKS_PER_SEC) - execT >= 1){
       execT = clock() / CLOCKS_PER_SEC;
-      sprintf(tmp, "%d", execT);
+      //parseRecv(usbData());
+/*       updateData(); */
+      sscanf(usbData(), "%2.1f %2.1f %2.1f %2.1f %2.1f", NULL, NULL, NULL, NULL, &hData[1]);
+      sprintf(tmp, "%2.1f ", hData[1]);
       sText(tmp);
-      }*/
+      
+    }
     refresh();
-    btn = getch();
-    if(btn == 'q')
-      break;
-    else if(btn == KEY_F(1))
-    sText(helpText);
-      }
+/*     btn = getch(); */
+/*     if(btn == 'q') */
+/*       break; */
+/*     else if(btn == KEY_F(1)) */
+/*       sText(helpText); */
+  }
   
   endwin();
   return 0;

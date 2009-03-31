@@ -1,5 +1,5 @@
 CC = gcc $(CFLAGS) $(LIBS) $(INCLUDES) $(DEFS)
-CFLAGS = -O0 -pipe -g
+CFLAGS = -O2 -pipe
 LIBS = -lncurses -lm -lusb
 INCLUDES = -I.
 FILES =  *.c
@@ -14,7 +14,7 @@ htc.o: $(FILES)
 	$(CC) $(FILES) -c
 
 htc: $(htc)
-	$(CC) $(LIBS) -o $@ *.o
+	$(CC) -o $@ *.o
 
 clean:
 	rm -f *.o htc
