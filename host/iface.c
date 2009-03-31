@@ -13,9 +13,8 @@
 #define DEV_REQ_LEN 64
 #define DEV_TIMEOUT 1000
 
-char *recvBuffer;
 usb_dev_handle *handle;
-
+char *recvBuf;
 
 /* code mostly taken from PowerSwitch, http://www.obdev.at/avrusb/powerswitch.html */
 static int  usbGetStringAscii(usb_dev_handle *dev, int index, int langid, char *buf, int buflen)
@@ -50,7 +49,6 @@ static int usbOpenDevice(usb_dev_handle **device, int vendor, char *vendorName, 
   usb_dev_handle      *handle = NULL;
   int                 errorCode = USB_ERROR_NOTFOUND;
   static int          didUsbInit = 0;
-  char tmpBuf[256];
   
   if(!didUsbInit){
     didUsbInit = 1;
@@ -117,17 +115,17 @@ usbInit(void){
 
 char
 *usbData(void){
-  recvBuffer = malloc(DEV_REQ_LEN);
+  recvBuf = (char *)malloc(DEV_REQ_LEN);
   
   usb_control_msg(handle,
 		  USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, // bRequestType
 		  0, // bRequest
 		  0, // wValue
 		  0, // wIndex
-		  recvBuffer, // pointer to destination buffer
+		  recvBuf, // pointer to destination buffer
 		  DEV_REQ_LEN, // wLength
 		  DEV_TIMEOUT);
-    return recvBuffer;
+  return recvBuf;
 }
 
 	

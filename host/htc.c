@@ -2,20 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iface.h>
-#include <htc.h>
 #include <time.h>
 #include <math.h>
 #define MAXTS 3
 #define MAXHS 2
 
 const char welc[] = "HT217 interface";
-extern char *recvBuffer;
-double tData[MAXTS], hData[MAXHS];
+const char helpText[] = "F1: This help text. q: quit.\n";
+
+extern char *recvBuf;
+float tData[MAXTS], hData[MAXHS];
 WINDOW *msgs, *data;
 
 void
 parseRecv(char *buf){
-  sscanf(buf, "%2.1f %2.1f %2.1f %2.1f %2.1f", &tData[0], &tData[1], &tData[2], &hData[0], &hData[1]);
+  sscanf(buf, "%f %f %f %f %f", &tData[0], &tData[1], &tData[2], &hData[0], &hData[1]);
 }
 
 void
@@ -37,6 +38,7 @@ void sText(const char *str){
     wmove(msgs, ++y, 2);
   if(y >= trunc(LINES / 4) - 2){
     scroll(msgs);
+
     wmove(msgs, --y, 2);
   }
   wprintw(msgs, str);
@@ -97,14 +99,10 @@ main(int argc, char *argv[]){
   while(1){
     if((delta = clock() / CLOCKS_PER_SEC) - execT >= 1){
       execT = clock() / CLOCKS_PER_SEC;
-      //parseRecv(usbData());
-/*       updateData(); */
-      sscanf(usbData(), "%2.1f %2.1f %2.1f %2.1f %2.1f", NULL, NULL, NULL, NULL, &hData[1]);
-      sprintf(tmp, "%2.1f ", hData[1]);
-      sText(tmp);
-      
+      parseRecv(usbData());
+      updateData();
+      refresh();
     }
-    refresh();
 /*     btn = getch(); */
 /*     if(btn == 'q') */
 /*       break; */
