@@ -40,10 +40,8 @@ static double tData[MAXTS], hData[MAXHS];
 void
 setup(void){
 	MCUCR = _BV(ISC11); //interrupt sense control
-	/* PORTD = _BV(PD3); PORTB = _BV(PB2); */
 	
 	nSensors = search_sensors();
-	//	adc_setup();
 	lcd_init(LCD_DISP_ON);
 	
 	TIMSK = _BV(OCIE1A) | _BV(TOIE2);
@@ -111,10 +109,11 @@ fillData(double tData[], double hData[]){
     tData[i] = (double)gtemp(i);
     tData[i] /= 10;
   }
-  if(hData != NULL)
-  for(i = 0; i <= MAXHS; i++){
-    hData[i] = (double)mhumid(i);
-    hData[i] /= 10;
+  if(hData != NULL){
+    hData[0] = (double)mhumid(0);
+    hData[0] /= 10;
+    hData[1] = (double)mhumid(2);
+    hData[1] /= 10;
   }
 }
 
@@ -152,7 +151,7 @@ updateScr(void){
 int
 main(void){
   const char *stext[] = {"T1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
-			 "Fi 1, %%: %d", "Fi 2, %%: %2.1f", "Set temp.: %d", "Set time", "%.2d:%.2d \n"};
+			 "Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set temp.: %d", "Set time", "%.2d:%.2d \n"};
   unsigned short hOn = 0, swTemp = 25;
   
   setup();
@@ -193,7 +192,7 @@ main(void){
       sprintf(line, stext[nPos], tData[nPos]);
       break;
     case 3: case 4:
-      sprintf(line, stext[nPos], mhumid(1));
+      sprintf(line, stext[nPos], hData[nPos-3]);
       break;
     case 5:
       sprintf(line, stext[nPos], swTemp);
