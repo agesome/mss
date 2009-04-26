@@ -18,9 +18,9 @@ main.o: $(FILES)
 
 main.elf: $(main)
 	$(CC) -o $@ *.o
+
 asm: $(FILES)
 	$(CC) $(FILES) -S
-
 clean:
 	rm -f *.o main.elf main.hex
 
