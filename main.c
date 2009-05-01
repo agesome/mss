@@ -18,7 +18,7 @@
 #define TEMP_REG_PORT PORTA
 #define TEMP_REG_PIN PA4
 /* A == port, B == pin */
-#define UP(A, B) !(A & (~A | _BV(B)))
+#define ISUP(A, B) !(A & (~A | _BV(B)))
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -37,10 +37,10 @@ static unsigned short nPos = 0, hour = 12, min = 0, sec = 0,
   usbCount = 0, swDelay0 = 0, swDelay1 = 0, nSensors = 0;
 static double tData[MAXTS], hData[MAXHS];
 
+void updateScr(void);
+
 void
 setup(void){
-	MCUCR = _BV(ISC11); //interrupt sense control
-	
 	nSensors = search_sensors();
 	lcd_init(LCD_DISP_ON);
 	
@@ -74,15 +74,11 @@ ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
 }
 
 ISR(TIMER2_OVF_vect){
-  usbCount++;
-  if(usbCount > 3){
     usbPoll();
-    usbCount = 0;
-  } 
   /*check for buttons activity*/
-   if(UP(PINB, PB2) && !swDelay1)
+   if(ISUP(PINB, PB2) && !swDelay1)
      swDelay1 = 1;
-  if(UP(PIND, PD3) && !swDelay0)
+   if(ISUP(PIND, PD3) && !swDelay0)
       swDelay0 = 1;
 }
 
@@ -119,33 +115,33 @@ fillData(double tData[], double hData[]){
 
 void
 sensorShow(void){
-  char tmp[LCD_DISP_LENGTH] = " ";
   lcd_clrscr();
-  lcd_puts("Sensor detection...\n");
+  sprintf(disp, "Sensor detection...\n");
+  lcd_puts(disp);
   while(!swDelay0){
     double dtData[MAXTS];
     unsigned short i;
     fillData(tData, NULL);
-    _delay_ms(100);
+    _delay_ms(150);
     fillData(dtData, NULL);
     for(i = 0; i < nSensors; i++){
-      if(tData[i] < dtData[i])
+      if(tData[i] < dtData[i]){
 	sprintf(line, "Sensor %d up!", i);
-      else if(tData[i] > dtData[i])
-	sprintf(tmp, "Sensor %d down!", i);
+	updateScr();
+      }
+      else if(tData[i] > dtData[i]){
+	sprintf(line, "Sensor %d down!", i);
+	updateScr();
+      }
     }
-    lcd_clrscr();
-    lcd_puts(tmp);
   }
 }
 
 void
 updateScr(void){
-  char *tmp;
-  tmp = strcat(disp,line);
-  strcpy(disp,tmp);
   lcd_clrscr();
   lcd_puts(disp);
+  lcd_puts(line);
 }
 
 int
