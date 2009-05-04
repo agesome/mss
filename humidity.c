@@ -17,6 +17,8 @@
 #include <humidity.h>
 #include <util/delay.h>
 
+float u, relH, res;
+
 void adc_setup(void){
 	ADMUX |= _BV(REFS0) | _BV(ADLAR);
 	ADCSRA |= _BV(ADPS2) | _BV(ADPS0) | _BV(ADEN); 
@@ -31,9 +33,7 @@ void adc_startc(short pin){
 	_delay_ms(15);//start conversion, pin is set
 }
 
-int mhumid(short pin){
-  float u, relH, res;
-  
+int mhumid(short pin){  
 	adc_startc(pin);
 	u = (5.07 / 256) * ADCH;
 	res = (4600 * u) / (5.07 - u);

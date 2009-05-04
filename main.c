@@ -34,7 +34,8 @@
 static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
 char usbBuff[USB_REQ_LEN];
 static unsigned short nPos = 0, hour = 12, min = 0, sec = 0,
-  usbCount = 0, swDelay0 = 0, swDelay1 = 0, nSensors = 0;
+  usbCount = 0, swDelay0 = 0, swDelay1 = 0, swd1 = 0, swd0 = 0,
+  nSensors = 0, dispUpdate = 0, sD = 0;
 static double tData[MAXTS], hData[MAXHS];
 
 void updateScr(void);
@@ -44,7 +45,7 @@ setup(void){
 	nSensors = search_sensors();
 	lcd_init(LCD_DISP_ON);
 	
-	TIMSK = _BV(OCIE1A) | _BV(TOIE2);
+	TIMSK = _BV(OCIE1A) | _BV(TOIE2) | _BV(TOIE0);
 	OCR1A = 46875; //one second
 	
 	/* re-enumerate */
@@ -57,29 +58,54 @@ setup(void){
 	/*timers on*/
 	TCCR1B = _BV(WGM12) | _BV(CS12);
 	TCCR2 = _BV(CS22) | _BV(CS21) | _BV(CS20);
+	TCCR0 = _BV(CS02) |  _BV(CS00);
 }
 
 ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
 	sec++;
-	if(sec == 60){
+	if(sec >= 60){
 	  sec = 0;
 	  min++;
 	}
-	if(min == 60){
+	if(min >= 60){
 	  min = 0;
 	  hour++;
 	}
-	if(hour == 24)
+	if(hour >= 24)
 	  hour = 0;
 }
 
 ISR(TIMER2_OVF_vect){
+  usbCount++;
+  if(usbCount == 2){
     usbPoll();
+	usbCount = 0;
+  }
+}
+
+ISR(TIMER0_OVF_vect, ISR_NOBLOCK ){
   /*check for buttons activity*/
-   if(ISUP(PINB, PB2) && !swDelay1)
-     swDelay1 = 1;
-   if(ISUP(PIND, PD3) && !swDelay0)
-      swDelay0 = 1;
+  if(ISUP(PINB, PB2) && !swDelay1){
+	if(swd1){
+	  swDelay1 = 1;
+	  swd1 = 0;
+	}
+	else
+	  swd1 = 1;
+  }
+  if(ISUP(PIND, PD3) && !swDelay0){
+	if(swd0){
+	  swDelay0 = 1;
+	  swd0 = 0;
+	}
+	else
+	  swd0 = 1;
+  }
+  dispUpdate++;
+  if(dispUpdate >= 15 && !sD){
+	updateScr();
+	dispUpdate = 0;
+  }
 }
 
 usbMsgLen_t
@@ -127,11 +153,13 @@ sensorShow(void){
     for(i = 0; i < nSensors; i++){
       if(tData[i] < dtData[i]){
 	sprintf(line, "Sensor %d up!", i);
-	updateScr();
+	lcd_clrscr();
+	lcd_puts(line);
       }
       else if(tData[i] > dtData[i]){
 	sprintf(line, "Sensor %d down!", i);
-	updateScr();
+	lcd_clrscr();
+	lcd_puts(line);
       }
     }
   }
@@ -144,7 +172,7 @@ updateScr(void){
   lcd_puts(line);
 }
 
-int
+void
 main(void){
   const char *stext[] = {"T1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f", 
 			 "Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set temp.: %d", "Set time", "%.2d:%.2d \n"};
@@ -152,12 +180,14 @@ main(void){
   
   setup();
   
-  while(1){
+  loop:
     fillData(tData, hData);
 /*     process buttons */
     if(nPos < 5 && swDelay0){
       swDelay0 = 0;
+	  sD = 1;
       sensorShow();
+	  sD = 0;
     }
     
     if(swDelay1){
@@ -180,7 +210,8 @@ main(void){
       }
       swDelay0 = 0;
     }
-    
+
+	if(!sD){
     sprintf(disp, stext[7], hour, min, sec);
     
     switch(nPos){
@@ -196,6 +227,7 @@ main(void){
     case 6:
       sprintf(line, stext[nPos]);
       break;
+	}
     }
       
     /*temperature regulation*/
@@ -207,7 +239,6 @@ main(void){
       TEMP_REG_PORT ^= _BV(TEMP_REG_PIN);
       hOn = 0;
     }
-    updateScr();
-  }
+	goto loop;
 }
 
