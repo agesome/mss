@@ -75,12 +75,8 @@ ISR(TIMER1_COMPA_vect, ISR_NOBLOCK ){
 	  hour = 0;
 }
 
-ISR(TIMER2_OVF_vect){
-  usbCount++;
-  if(usbCount == 2){
-    usbPoll();
-	usbCount = 0;
-  }
+ISR(TIMER2_OVF_vect, ISR_BLOCK){
+  usbPoll();
 }
 
 ISR(TIMER0_OVF_vect, ISR_NOBLOCK ){
@@ -110,17 +106,10 @@ ISR(TIMER0_OVF_vect, ISR_NOBLOCK ){
 
 usbMsgLen_t
 usbFunctionSetup(unsigned char setupData[8]){
-    usbRequest_t *rq = (void *)setupData;
-    
-    /*
-      0: send temperature value and humidity percentage;
-    */
-    switch(rq->bRequest){
-    case 0:
-      sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", tData[0], tData[1], tData[2], hData[0], hData[1]);
-      usbMsgPtr = (unsigned char *)usbBuff;
-    }
-    return USB_REQ_LEN;
+  usbRequest_t *rq = (void *)setupData;
+  sprintf(usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", tData[0], tData[1], tData[2], hData[0], hData[1]);
+  usbMsgPtr = (unsigned char *)usbBuff;
+  return USB_REQ_LEN;
 }
 
 void

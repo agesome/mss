@@ -1,7 +1,7 @@
 MCU = atmega32
 CC = avr-gcc $(CFLAGS) $(INCLUDES) $(DEFS)
 
-CFLAGS = -Os -mmcu=$(MCU) -Wl,-u,vfprintf -lprintf_flt -lm -Wall \
+CFLAGS = -O3 -mmcu=$(MCU) -Wl,-u,vfprintf -lprintf_flt -lm -Wall \
 -frename-registers -ffreestanding -funsigned-char -fpack-struct
 INCLUDES = -I usbdrv/ -I.
 FILES = usbdrv/*.c usbdrv/*.S *.c
