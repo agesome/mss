@@ -19,34 +19,40 @@
 
 float u, relH, res;
 
-void adc_setup(void){
-	ADMUX |= _BV(REFS0) | _BV(ADLAR);
-	ADCSRA |= _BV(ADPS2) | _BV(ADPS0) | _BV(ADEN); 
+void
+adc_setup (void)
+{
+  ADMUX |= _BV (REFS0) | _BV (ADLAR);
+  ADCSRA |= _BV (ADPS2) | _BV (ADPS0) | _BV (ADEN);
 }
 
-void adc_startc(short pin){
-	ADMUX = 0; //reset pin setting bits
-	ADMUX |= pin;
-	adc_setup();
-	_delay_us(130);
-	ADCSRA |= _BV(ADSC);
-	_delay_ms(15);//start conversion, pin is set
+void
+adc_startc (short pin)
+{
+  ADMUX = 0;			//reset pin setting bits
+  ADMUX |= pin;
+  adc_setup ();
+  _delay_us (130);
+  ADCSRA |= _BV (ADSC);
+  _delay_ms (15);		//start conversion, pin is set
 }
 
-int mhumid(short pin){  
-	adc_startc(pin);
-	u = (5.07 / 256) * ADCH;
-	res = (4600 * u) / (5.07 - u);
-	
-	if(res >= 1000000)
-		relH = 30 - res / 529100;
-	else if(res >= 100000 && res <= 1000000)
-		relH = 48 - res / 50000;
+int
+mhumid (short pin)
+{
+  adc_startc (pin);
+  u = (5.07 / 256) * ADCH;
+  res = (4600 * u) / (5.07 - u);
 
-	else if(res <= 100000 && res >= 10000)
-		relH = 75 - res / 3333;
-	else if(res <= 10000 && res >= 200)
-		relH = 95 - res / 490;
-	
-	return relH * 10;
+  if (res >= 1000000)
+    relH = 30 - res / 529100;
+  else if (res >= 100000 && res <= 1000000)
+    relH = 48 - res / 50000;
+
+  else if (res <= 100000 && res >= 10000)
+    relH = 75 - res / 3333;
+  else if (res <= 10000 && res >= 200)
+    relH = 95 - res / 490;
+
+  return relH * 10;
 }

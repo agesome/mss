@@ -14,37 +14,42 @@
 
 #warning "Never compile production devices with debugging enabled"
 
-static void uartPutc(char c)
+static void
+uartPutc (char c)
 {
-    while(!(ODDBG_USR & (1 << ODDBG_UDRE)));    /* wait for data register empty */
-    ODDBG_UDR = c;
+  while (!(ODDBG_USR & (1 << ODDBG_UDRE)));	/* wait for data register empty */
+  ODDBG_UDR = c;
 }
 
-static uchar    hexAscii(uchar h)
+static uchar
+hexAscii (uchar h)
 {
-    h &= 0xf;
-    if(h >= 10)
-        h += 'a' - (uchar)10 - '0';
-    h += '0';
-    return h;
+  h &= 0xf;
+  if (h >= 10)
+    h += 'a' - (uchar) 10 - '0';
+  h += '0';
+  return h;
 }
 
-static void printHex(uchar c)
+static void
+printHex (uchar c)
 {
-    uartPutc(hexAscii(c >> 4));
-    uartPutc(hexAscii(c));
+  uartPutc (hexAscii (c >> 4));
+  uartPutc (hexAscii (c));
 }
 
-void    odDebug(uchar prefix, uchar *data, uchar len)
+void
+odDebug (uchar prefix, uchar * data, uchar len)
 {
-    printHex(prefix);
-    uartPutc(':');
-    while(len--){
-        uartPutc(' ');
-        printHex(*data++);
+  printHex (prefix);
+  uartPutc (':');
+  while (len--)
+    {
+      uartPutc (' ');
+      printHex (*data++);
     }
-    uartPutc('\r');
-    uartPutc('\n');
+  uartPutc ('\r');
+  uartPutc ('\n');
 }
 
 #endif

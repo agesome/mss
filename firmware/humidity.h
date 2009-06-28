@@ -20,6 +20,6 @@
  */
 #define MAXHS 2
 
-void adc_setup(void);
-void adc_startc(short pin);
-int mhumid(short pin);
+void adc_setup (void);
+void adc_startc (short pin);
+int mhumid (short pin);

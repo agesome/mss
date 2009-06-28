@@ -1,4 +1,2 @@
-int usbInit(void);
-char *usbData(void);
-
-
+int usbInit (void);
+char *usbData (void);

@@ -2,11 +2,10 @@
 #define CRC8_H_
 
 #include <inttypes.h>
+  uint8_t crc8 (uint8_t * data_in, uint16_t number_of_bytes_to_read);
 
-uint8_t	crc8 (uint8_t* data_in, uint16_t number_of_bytes_to_read);
-
-#endif
-
+#endif	/*  */
+  
 /*
 This is based on code from :
 
@@ -28,5 +27,5 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
+*/ 
+  
