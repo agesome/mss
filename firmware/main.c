@@ -33,8 +33,8 @@
 
 static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
 char usbBuff[USB_REQ_LEN];
-static unsigned short nPos = 0, hour = 12, min = 0, sec = 0,
-  usbCount = 0, swDelay0 = 0, swDelay1 = 0, swd1 = 0, swd0 = 0,
+static uint8_t nPos = 0, hour = 12, min = 0, sec = 0,
+  swDelay0 = 0, swDelay1 = 0, swd1 = 0, swd0 = 0,
   nSensors = 0, dispUpdate = 0, sD = 0;
 static double tData[MAXTS], hData[MAXHS];
 
@@ -118,7 +118,7 @@ ISR (TIMER0_OVF_vect, ISR_NOBLOCK)
 usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
-  usbRequest_t *rq = (void *) setupData;
+  /* usbRequest_t *rq = (void *) setupData; */
   sprintf (usbBuff, "%2.1f %2.1f %2.1f %2.1f %2.1f", tData[0], tData[1],
 	   tData[2], hData[0], hData[1]);
   usbMsgPtr = (unsigned char *) usbBuff;
@@ -188,7 +188,7 @@ main (void)
 {
   const char *stext[] = { "T1, C: %2.1f", "T 2, C: %2.1f", "T 3, C: %2.1f",
     "Fi 1, %%: %2.1f", "Fi 2, %%: %2.1f", "Set temp.: %d", "Set time",
-      "%.2d:%.2d \n"
+    "%.2d:%.2d \n"
   };
   unsigned short hOn = 0, swTemp = 25;
 

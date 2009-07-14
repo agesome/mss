@@ -1,3 +1,3 @@
 #define MAXTS 3
-int gtemp (int);
-int search_sensors (void);
+uint8_t gtemp (int);
+uint8_t search_sensors (void);

@@ -17,13 +17,13 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iface.h>
+#include "iface.h"
 #include <time.h>
 #include <math.h>
 #define MAXTS 3
 #define MAXHS 2
 
-char logfile[256] = "Logfile.txt";
+char logfile[] = "Logfile.txt";
 const char welc[] = "HT217 interface";
 
 extern char *recvBuf;
@@ -59,7 +59,7 @@ sText (const char *str)
 
   /*border checks */
   getyx (msgs, y, x);
-  if (strlen (str) + x >= COLS - 1)
+  if (strlen (str) + x >= (unsigned int) COLS - 1)
     wmove (msgs, ++y, 2);
   if (y >= trunc (LINES / 4) - 2)
     {
@@ -114,7 +114,7 @@ init (void)
 
 
 int
-main (int argc, char *argv[])
+main (void)
 {
   clock_t execT, delta;
 

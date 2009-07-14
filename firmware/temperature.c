@@ -32,7 +32,7 @@
 
 uint8_t gSensorIDs[MAXTS][OW_ROMCODE_SIZE], nSensors;
 
-int
+uint8_t
 search_sensors (void)
 {
   uint8_t i;
@@ -64,7 +64,7 @@ search_sensors (void)
 
 }
 
-int
+uint8_t
 gtemp (int ns)
 {
   uint8_t subzero, cel, cel_frac_bits;

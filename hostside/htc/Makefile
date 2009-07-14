@@ -1,6 +1,6 @@
 VERSION = 0.5
 CC = gcc $(CFLAGS) $(LIBS) $(INCLUDES) $(DEFS)
-CFLAGS = -O2 -pipe -Wall -pedantic -std=c99
+CFLAGS = -O2 -pipe -pedantic -Wall -Wextra -std=c99
 LIBS = -lncurses -lm -lusb
 INCLUDES = -I.
 FILES =  *.c

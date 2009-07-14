@@ -37,7 +37,7 @@ adc_startc (short pin)
   _delay_ms (15);		//start conversion, pin is set
 }
 
-int
+uint16_t
 mhumid (short pin)
 {
   adc_startc (pin);

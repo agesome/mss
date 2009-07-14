@@ -1,10 +1,11 @@
-/* please read copyright-notice at EOF */  
-  
+/* please read copyright-notice at EOF */
+
 #include <inttypes.h>
-  
+
 #define CRC8INIT	0x00
 #define CRC8POLY	0x18	//0X18 = X^8+X^5+X^4+X^0
-  uint8_t crc8 (uint8_t * data_in, uint16_t number_of_bytes_to_read) 
+uint8_t
+crc8 (uint8_t * data_in, uint16_t number_of_bytes_to_read)
 {
   uint8_t crc;
   uint16_t loop_count;
@@ -13,11 +14,11 @@
   uint8_t feedback_bit;
   crc = CRC8INIT;
   for (loop_count = 0; loop_count != number_of_bytes_to_read; loop_count++)
-    
+
     {
       data = data_in[loop_count];
       bit_counter = 8;
-      
+
       do
 	{
 	  feedback_bit = (crc ^ data) & 0x01;
@@ -59,4 +60,4 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/ 
+*/
