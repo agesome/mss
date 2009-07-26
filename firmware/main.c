@@ -38,8 +38,6 @@ static uint8_t nPos = 0, hour = 12, min = 0, sec = 0,
   nSensors = 0, dispUpdate = 0, sD = 0;
 static double tData[MAXTS], hData[MAXHS];
 
-void updateScr (void);
-
 void
 setup (void)
 {
@@ -110,7 +108,9 @@ ISR (TIMER0_OVF_vect, ISR_NOBLOCK)
   dispUpdate++;
   if (dispUpdate >= 15 && !sD)
     {
-      updateScr ();
+      lcd_clrscr ();
+      lcd_puts (disp);
+      lcd_puts (line);
       dispUpdate = 0;
     }
 }
@@ -148,8 +148,7 @@ void
 sensorShow (void)
 {
   lcd_clrscr ();
-  sprintf (disp, "Sensor detection...\n");
-  lcd_puts (disp);
+  lcd_puts ("Sensor detection...\n");
   while (!swDelay0)
     {
       double dtData[MAXTS];
@@ -173,14 +172,6 @@ sensorShow (void)
 	    }
 	}
     }
-}
-
-void
-updateScr (void)
-{
-  lcd_clrscr ();
-  lcd_puts (disp);
-  lcd_puts (line);
 }
 
 void

@@ -1,11 +1,11 @@
 /* Name: usbportability.h
- * Project: AVR USB driver
+ * Project: V-USB, virtual USB port for Atmel's(r) AVR(r) microcontrollers
  * Author: Christian Starkjohann
  * Creation Date: 2008-06-17
  * Tabsize: 4
  * Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id: usbportability.h 692 2008-11-07 15:07:40Z cs $
+ * This Revision: $Id: usbportability.h 740 2009-04-13 18:23:31Z cs $
  */
 
 /*
@@ -27,11 +27,11 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
 /* We check explicitly for IAR and CodeVision. Default is avr-gcc/avr-libc. */
 
 /* ------------------------------------------------------------------------- */
-#if defined __IAR_SYSTEMS_ICC__ || defined __IAR_SYSTEMS_ASM__	/* check for IAR */
+#if defined __IAR_SYSTEMS_ICC__ || defined __IAR_SYSTEMS_ASM__  /* check for IAR */
 /* ------------------------------------------------------------------------- */
 
 #ifndef ENABLE_BIT_DEFINITIONS
-#   define ENABLE_BIT_DEFINITIONS	1	/* Enable bit definitions */
+#   define ENABLE_BIT_DEFINITIONS	1   /* Enable bit definitions */
 #endif
 
 /* Include IAR headers */
@@ -40,10 +40,10 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
 #   include <inavr.h>
 #endif
 
-#define __attribute__(arg)	/* not supported on IAR */
+#define __attribute__(arg)  /* not supported on IAR */
 
 #ifdef __IAR_SYSTEMS_ASM__
-#   define __ASSEMBLER__	/* IAR does not define standard macro for asm */
+#   define __ASSEMBLER__    /* IAR does not define standard macro for asm */
 #endif
 
 #ifdef __HAS_ELPM__
@@ -63,7 +63,7 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
 #define _BV(x)      (1 << (x))
 
 /* assembler compatibility macros */
-#define nop2    rjmp    $+2	/* jump to next instruction */
+#define nop2    rjmp    $+2 /* jump to next instruction */
 #define XL      r26
 #define XH      r27
 #define YL      r28
@@ -71,7 +71,7 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
 #define ZL      r30
 #define ZH      r31
 #define lo8(x)  LOW(x)
-#define hi8(x)  (((x)>>8) & 0xff)	/* not HIGH to allow XLINK to make a proper range check */
+#define hi8(x)  (((x)>>8) & 0xff)   /* not HIGH to allow XLINK to make a proper range check */
 
 /* Depending on the device you use, you may get problems with the way usbdrv.h
  * handles the differences between devices. Since IAR does not use #defines
@@ -82,7 +82,7 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
  */
 
 /* ------------------------------------------------------------------------- */
-#elif __CODEVISIONAVR__		/* check for CodeVision AVR */
+#elif __CODEVISIONAVR__ /* check for CodeVision AVR */
 /* ------------------------------------------------------------------------- */
 /* This port is not working (yet) */
 
@@ -91,39 +91,36 @@ Thanks to Oleg Semyonov for his help with the IAR tools port!
 #include <io.h>
 #include <delay.h>
 
-#define __attribute__(arg)	/* not supported on IAR */
+#define __attribute__(arg)  /* not supported on IAR */
 
 #define PROGMEM                 __flash
 #define USB_READ_FLASH(addr)    (*(PROGMEM char *)(addr))
 
 #ifndef __ASSEMBLER__
-static inline void
-cli (void)
+static inline void  cli(void)
 {
-#asm("cli");
+    #asm("cli");
 }
-
-static inline void
-sei (void)
+static inline void  sei(void)
 {
-#asm("sei");
+    #asm("sei");
 }
 #endif
 #define _delay_ms(t)    delay_ms(t)
 #define _BV(x)          (1 << (x))
-#define USB_CFG_USE_SWITCH_STATEMENT 1	/* macro for if() cascase fails for unknown reason */
+#define USB_CFG_USE_SWITCH_STATEMENT 1  /* macro for if() cascase fails for unknown reason */
 
 #define macro   .macro
 #define endm    .endmacro
-#define nop2    rjmp    .+0	/* jump to next instruction */
+#define nop2    rjmp    .+0 /* jump to next instruction */
 
 /* ------------------------------------------------------------------------- */
-#else /* default development environment is avr-gcc/avr-libc */
+#else   /* default development environment is avr-gcc/avr-libc */
 /* ------------------------------------------------------------------------- */
 
 #include <avr/io.h>
 #ifdef __ASSEMBLER__
-#   define _VECTOR(N)   __vector_ ## N	/* io.h does not define this for asm */
+#   define _VECTOR(N)   __vector_ ## N   /* io.h does not define this for asm */
 #else
 #   include <avr/pgmspace.h>
 #endif
@@ -132,12 +129,12 @@ sei (void)
 
 #define macro   .macro
 #define endm    .endm
-#define nop2    rjmp    .+0	/* jump to next instruction */
+#define nop2    rjmp    .+0 /* jump to next instruction */
 
-#endif /* development environment */
+#endif  /* development environment */
 
 /* for conveniecne, ensure that PRG_RDB exists */
 #ifndef PRG_RDB
 #   define PRG_RDB(addr)    USB_READ_FLASH(addr)
 #endif
-#endif /* __usbportability_h_INCLUDED__ */
+#endif  /* __usbportability_h_INCLUDED__ */

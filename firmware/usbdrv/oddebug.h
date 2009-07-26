@@ -25,7 +25,7 @@ the output and a memory block to dump in hex ('data' and 'len').
 
 
 #ifndef F_CPU
-#   define  F_CPU   12000000	/* 12 MHz */
+#   define  F_CPU   12000000    /* 12 MHz */
 #endif
 
 /* make sure we have the UART defines: */
@@ -35,7 +35,7 @@ the output and a memory block to dump in hex ('data' and 'len').
 #   define  uchar   unsigned char
 #endif
 
-#if DEBUG_LEVEL > 0 && !(defined TXEN || defined TXEN0)	/* no UART in device */
+#if DEBUG_LEVEL > 0 && !(defined TXEN || defined TXEN0) /* no UART in device */
 #   warning "Debugging disabled because device has no UART"
 #   undef   DEBUG_LEVEL
 #endif
@@ -61,7 +61,7 @@ the output and a memory block to dump in hex ('data' and 'len').
 /* ------------------------------------------------------------------------- */
 
 #if DEBUG_LEVEL > 0
-extern void odDebug (uchar prefix, uchar * data, uchar len);
+extern void odDebug(uchar prefix, uchar *data, uchar len);
 
 /* Try to find our control registers; ATMEL likes to rename these */
 
@@ -109,11 +109,10 @@ extern void odDebug (uchar prefix, uchar * data, uchar len);
 #   define  ODDBG_UDR   UDR0
 #endif
 
-static inline void
-odDebugInit (void)
+static inline void  odDebugInit(void)
 {
-  ODDBG_UCR |= (1 << ODDBG_TXEN);
-  ODDBG_UBRR = F_CPU / (19200 * 16L) - 1;
+    ODDBG_UCR |= (1<<ODDBG_TXEN);
+    ODDBG_UBRR = F_CPU / (19200 * 16L) - 1;
 }
 #else
 #   define odDebugInit()
