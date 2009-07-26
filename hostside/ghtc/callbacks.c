@@ -1,7 +1,7 @@
 #include "ghtc.h"
 
 gboolean
-wmain_destroy_event (void)
+wmain_delete_event (void)
 {
   return FALSE;
 }
