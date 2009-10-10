@@ -7,7 +7,13 @@ wmain_delete_event (void)
 }
 
 void
-a_destroy (void)
+w_main_destroy (void)
+{
+  gtk_main_quit ();
+}
+
+void
+ghtc_quit (void)
 {
   gtk_main_quit ();
 }
