@@ -33,9 +33,10 @@
 
 static char disp[LCD_DISP_LENGTH * 2], line[LCD_DISP_LENGTH];
 char usbBuff[USB_REQ_LEN];
-static uint8_t nPos = 0, hour = 12, min = 0, sec = 0,
+volatile static uint8_t nPos = 0, hour = 12, min = 0, sec = 0,
   swDelay0 = 0, swDelay1 = 0, swd1 = 0, swd0 = 0,
-  nSensors = 0, dispUpdate = 0, sD = 0;
+   dispUpdate = 0, sD = 0;
+static uint8_t nSensors = 0;
 static double tData[MAXTS], hData[MAXHS];
 
 void
@@ -52,7 +53,7 @@ setup (void)
   _delay_ms (100);
   usbDeviceConnect ();
   usbInit ();
-
+  
   sei ();
   /*timers on */
   TCCR1B = _BV (WGM12) | _BV (CS12);
