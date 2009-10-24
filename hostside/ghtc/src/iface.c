@@ -29,6 +29,15 @@
 #define DEV_REQ_LEN 64
 #define DEV_TIMEOUT 1000
 
+typedef struct _ht_data
+{
+  double t1, t2, t3, t4, t5;
+  double h1, h2;
+} data;
+
+data r;
+double t[5], h[2];
+
 usb_dev_handle *handle;
 char *recvBuf;
 
@@ -158,24 +167,39 @@ usbOpenDevice (usb_dev_handle ** device, int vendor, char *vendorName,
 int
 usbInit (void)
 {
-  if (usbOpenDevice
-      (&handle, USBDEV_SHARED_VENDOR, VNAME, USBDEV_SHARED_PRODUCT, PNAME))
-    return 1;
-  return 0;
+  /* if (usbOpenDevice */
+  /*     (&handle, USBDEV_SHARED_VENDOR, VNAME, USBDEV_SHARED_PRODUCT, PNAME)) */
+  /*   return 1; */
+  /* return 0; */
+  int i;
+  for(i = 0; i <= 4; i++)
+    t[i] = 0;
+  for(i = 0; i <= 1; i++)
+    h[i] = 0;
+  return 1;
 }
 
-char *
+data *
 usbData (void)
 {
-  recvBuf = (char *) malloc (DEV_REQ_LEN);
-  /* transfer problems sometimes occur, we check for them so we do not process garbage; return NULL on error */
-  if (usb_control_msg (handle, USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,	// bRequestType
-		       0,	// bRequest
-		       0,	// wValue
-		       0,	// wIndex
-		       recvBuf,	// pointer to destination buffer
-		       DEV_REQ_LEN,	// wLength
-		       DEV_TIMEOUT) < 0)
-    return NULL;
-  return recvBuf;
+  
+  /* recvBuf = (char *) malloc (DEV_REQ_LEN); */
+  /* /\* transfer problems sometimes occur, we check for them so we do not process garbage; return NULL on error *\/ */
+  /* if (usb_control_msg (handle, USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,	// bRequestType */
+  /* 		       0,	// bRequest */
+  /* 		       0,	// wValue */
+  /* 		       0,	// wIndex */
+  /* 		       recvBuf,	// pointer to destination buffer */
+  /* 		       DEV_REQ_LEN,	// wLength */
+  /* 		       DEV_TIMEOUT) < 0) */
+  /*   return NULL; */
+  /* return recvBuf; */
+  r.h1++;
+  r.h2 = r.h1+2;
+  r.t1++;
+  r.t2 = r.t1++;
+  r.t3 = r.t2++;
+  r.t4 = r.t3++;
+  r.t5 = r.t4++;
+  return &r;
 }

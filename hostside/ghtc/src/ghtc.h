@@ -1,7 +1,8 @@
 #include <gtk/gtk.h>
-#include <gtkdatabox.h>
+#include <cairo.h>
 
 GtkWidget *w_main, *vbox_main;
-GtkWidget *hbox_menu, *hbox_data, *hbox_graphs, *hbox_status;
+GtkWidget *box_menu, *box_data, *box_graphs, *box_status;
 GtkWidget *mainmenu, *menubar;
 GtkWidget *mainmenu_quit, *mainmenu_contents;
+GtkWidget *tgraph, *hgraph;
