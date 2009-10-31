@@ -64,7 +64,7 @@ search_sensors (void)
 
 }
 
-uint8_t
+uint16_t
 gtemp (int ns)
 {
   uint8_t subzero, cel, cel_frac_bits;

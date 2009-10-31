@@ -12,21 +12,21 @@
 /**
  @defgroup pfleury_lcd LCD library
  @code #include <lcd.h> @endcode
- 
+
  @brief Basic routines for interfacing a HD44780U-based text LCD display
 
  Originally based on Volker Oth's LCD library,
- changed lcd_init(), added additional constants for lcd_command(), 
+ changed lcd_init(), added additional constants for lcd_command(),
  added 4-bit I/O mode, improved and optimized code.
-       
- Library can be operated in memory mapped mode (LCD_IO_MODE=0) or in 
+
+ Library can be operated in memory mapped mode (LCD_IO_MODE=0) or in
  4-bit IO port mode (LCD_IO_MODE=1). 8-bit IO port mode not supported.
 
- Memory mapped mode compatible with Kanda STK200, but supports also 
+ Memory mapped mode compatible with Kanda STK200, but supports also
  generation of R/W signal through A8 address line.
-       
+
  @author Peter Fleury pfleury@gmx.ch http://jump.to/fleury
- 
+
  @see The chapter <a href="http://homepage.sunrise.ch/mysunrise/peterfleury/avr-lcd44780.html" target="_blank">Interfacing a HD44780 Based LCD to an AVR</a>
       on my home page.
 
@@ -41,20 +41,14 @@
 #include <inttypes.h>
 #include <avr/pgmspace.h>
 
-/** 
- *  @name  Definitions for MCU Clock Frequency
- *  Adapt the MCU clock frequency in Hz to your target. 
- */
-     /**< clock frequency in Hz, used to calculate delay timer */
-
-/**
+/*
  * @name  Definition for LCD controller type
  * Use 0 for HD44780 controller, change to 1 for displays with KS0073 controller.
  */
 #define LCD_CONTROLLER_KS0073 0	 /**< Use 0 for HD44780 controller, 1 for KS0073 controller */
 
-/** 
- *  @name  Definitions for Display Size 
+/**
+ *  @name  Definitions for Display Size
  *  Change these definitions to adapt setting to your display
  */
 #define LCD_LINES           2	  /**< number of visible lines of the display */
@@ -72,31 +66,31 @@
  *  @name Definitions for 4-bit IO mode
  *  Change LCD_PORT if you want to use a different port for the LCD pins.
  *
- *  The four LCD data lines and the three control lines RS, RW, E can be on the 
- *  same port or on different ports. 
+ *  The four LCD data lines and the three control lines RS, RW, E can be on the
+ *  same port or on different ports.
  *  Change LCD_RS_PORT, LCD_RW_PORT, LCD_E_PORT if you want the control lines on
- *  different ports. 
+ *  different ports.
  *
  *  Normally the four data lines should be mapped to bit 0..3 on one port, but it
  *  is possible to connect these data lines in different order or even on different
  *  ports by adapting the LCD_DATAx_PORT and LCD_DATAx_PIN definitions.
- *  
+ *
  */
-#define LCD_PORT         PORTC	      /**< port for the LCD lines   */
+#define LCD_PORT         PORTA	      /**< port for the LCD lines   */
 #define LCD_DATA0_PORT   LCD_PORT     /**< port for 4bit data bit 0 */
 #define LCD_DATA1_PORT   LCD_PORT     /**< port for 4bit data bit 1 */
 #define LCD_DATA2_PORT   LCD_PORT     /**< port for 4bit data bit 2 */
 #define LCD_DATA3_PORT   LCD_PORT     /**< port for 4bit data bit 3 */
-#define LCD_DATA0_PIN    4	      /**< pin for 4bit data bit 0  */
-#define LCD_DATA1_PIN    5	      /**< pin for 4bit data bit 1  */
-#define LCD_DATA2_PIN    6	     /**< pin for 4bit data bit 2  */
-#define LCD_DATA3_PIN    7	      /**< pin for 4bit data bit 3  */
-#define LCD_RS_PORT      LCD_PORT     /**< port for RS line         */
-#define LCD_RS_PIN       1	      /**< pin  for RS line         */
-#define LCD_RW_PORT      LCD_PORT     /**< port for RW line         */
-#define LCD_RW_PIN       2	      /**< pin  for RW line         */
-#define LCD_E_PORT       LCD_PORT     /**< port for Enable line     */
-#define LCD_E_PIN        3	      /**< pin  for Enable line     */
+#define LCD_DATA0_PIN    7	      /**< pin for 4bit data bit 0  */
+#define LCD_DATA1_PIN    6	      /**< pin for 4bit data bit 1  */
+#define LCD_DATA2_PIN    5	     /**< pin for 4bit data bit 2  */
+#define LCD_DATA3_PIN    4	      /**< pin for 4bit data bit 3  */
+#define LCD_RS_PORT      PORTC     /**< port for RS line         */
+#define LCD_RS_PIN       4	      /**< pin  for RS line         */
+#define LCD_RW_PORT      PORTC     /**< port for RW line         */
+#define LCD_RW_PIN       5	      /**< pin  for RW line         */
+#define LCD_E_PORT       PORTC     /**< port for Enable line     */
+#define LCD_E_PIN        6	      /**< pin  for Enable line     */
 
 #elif defined(__AVR_AT90S4414__) || defined(__AVR_AT90S8515__) || defined(__AVR_ATmega64__) || \
   defined (__AVR_ATmega8515__) || defined (__AVR_ATmega103__)
@@ -115,7 +109,7 @@
 
 /**
  *  @name Definitions for LCD command instructions
- *  The constants define the various LCD controller instructions which can be passed to the 
+ *  The constants define the various LCD controller instructions which can be passed to the
  *  function lcd_command(), see HD44780 data sheet for a complete description.
  */
 
@@ -167,7 +161,7 @@
 
 #define LCD_MODE_DEFAULT     ((1<<LCD_ENTRY_MODE) | (1<<LCD_ENTRY_INC) )
 
-/** 
+/**
  *  @name Functions
  */
 
@@ -176,28 +170,28 @@
  @param    dispAttr \b LCD_DISP_OFF display off\n
                     \b LCD_DISP_ON display on, cursor off\n
                     \b LCD_DISP_ON_CURSOR display on, cursor on\n
-                    \b LCD_DISP_ON_CURSOR_BLINK display on, cursor on flashing             
+                    \b LCD_DISP_ON_CURSOR_BLINK display on, cursor on flashing
  @return  none
 */
 extern void lcd_init (uint8_t dispAttr);
 
 /**
  @brief    Clear display and set cursor to home position
- @param    void                                        
+ @param    void
  @return   none
 */
 extern void lcd_clrscr (void);
 
 /**
  @brief    Set cursor to home position
- @param    void                                        
+ @param    void
  @return   none
 */
 extern void lcd_home (void);
 
 /**
  @brief    Set cursor to specified position
- 
+
  @param    x horizontal position\n (0: left most position)
  @param    y vertical position\n   (0: first line)
  @return   none
@@ -206,21 +200,21 @@ extern void lcd_gotoxy (uint8_t x, uint8_t y);
 
 /**
  @brief    Display character at current cursor position
- @param    c character to be displayed                                       
+ @param    c character to be displayed
  @return   none
 */
 extern void lcd_putc (char c);
 
 /**
  @brief    Display string without auto linefeed
- @param    s string to be displayed                                        
+ @param    s string to be displayed
  @return   none
 */
 extern void lcd_puts (const char *s);
 
 /**
  @brief    Display string from program memory without auto linefeed
- @param    s string from program memory be be displayed                                        
+ @param    s string from program memory be be displayed
  @return   none
  @see      lcd_puts_P
 */
@@ -234,8 +228,8 @@ extern void lcd_puts_p (const char *progmem_s);
 extern void lcd_command (uint8_t cmd);
 
 /**
- @brief    Send data byte to LCD controller 
- 
+ @brief    Send data byte to LCD controller
+
  Similar to lcd_putc(), but without interpreting LF
  @param    data byte to send to LCD controller, see HD44780 data sheet
  @return   none

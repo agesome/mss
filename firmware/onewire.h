@@ -11,7 +11,7 @@
    bytes so use OW_ONE_BUS if possible */
 
 /* Are set in main file*/
-#define OW_PIN  PD4
+#define OW_PIN  PD5
 #define OW_IN   PIND
 #define OW_OUT  PORTD
 #define OW_DDR  DDRD
