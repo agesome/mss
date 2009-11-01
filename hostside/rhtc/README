@@ -1,0 +1,1 @@
+rHTC is a new data interface for HT-217. It is mostly written in Ruby. LibUSB-based USB interface part is in C and is packaged as Ruby class.
