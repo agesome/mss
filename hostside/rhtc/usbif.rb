@@ -6,18 +6,19 @@ class HTUSBInterface
   def initialize dbg_level
     begin
       @dev = HTLLUSB.new dbg_level
-    rescue Exception => why
-      raise Exception, why.to_s
+    rescue StandardError => why
+      raise StandardError, why.to_s
     end
   end
 
   def fetch
-    m = @dev.fetch_data
-    if m != nil
-      return m.unpack "s*"
-    else
-      raise Exception, "Fetch failure"
+    begin
+      m = @dev.fetch_data
+    rescue StandardError
+      raise StandardError, "Fetch failure"
     end
+    return m.unpack "s*" if m
+    return nil
   end
   
   def destroy

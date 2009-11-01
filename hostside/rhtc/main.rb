@@ -2,85 +2,157 @@
 
 require 'gtk2'
 require 'cairo'
-require 'block_graph.rb'
-require 'usb_iface.rb'
+require 'graph'
+require 'usbif'
 
-TITLE='rHTC'
-MAXTEMP = 125.0
+class MenuBar
+  def initialize
+    @bar = Gtk::MenuBar.new
+    @items = Hash.new
+    @subitems = Hash.new
+  end
 
-wmain = Gtk::Window.new
-wmain.set_title TITLE
-wmain.signal_connect "delete-event" do Gtk.main_quit end
+  def add_item(name)
+    @items[name] = MenuItem.new(name)
+    @items[name].add_to(@bar)
+  end
 
-box_main = Gtk::VBox.new
-box_menu = Gtk::HBox.new
-box_data = Gtk::HBox.new
-box_status = Gtk::HBox.new
-box_graphs = Gtk::VBox.new
+  def add_subitem(item, name)
+    @items[item].add_subitem(name) { yield }
+  end
 
-wmain.add box_main
-box_main.pack_start box_menu
-box_main.pack_start box_data
-box_main.pack_start box_graphs
-box_main.pack_start box_status
+  def add_to(box)
+    box.add(@bar)
+  end
 
-menubar = Gtk::MenuBar.new
-mainmenu = Gtk::MenuItem.new "Main"
-mainmenu_contents = Gtk::Menu.new
-mainmenu_quit = Gtk::MenuItem.new "Quit"
+  class MenuItem
+    def initialize(name)
+      @item = Gtk::MenuItem.new(name)
+      @content = Gtk::Menu.new
+      @item.set_submenu(@content)
+      @subitems = Hash.new
+    end
 
-box_menu.add menubar
-menubar.append mainmenu
-mainmenu.set_submenu mainmenu_contents
-mainmenu_contents.append mainmenu_quit
-mainmenu_quit.signal_connect "activate" do Gtk.main_quit end
+    def add_subitem(name)
+      @subitems[name] = Gtk::MenuItem.new(name)
+      @subitems[name].signal_connect("activate") { yield }
+      @content.append(@subitems[name])
+    end
 
-statusbar = Gtk::Statusbar.new
-box_status.add statusbar
-#id = statusbar.get_context_id "wee"
-#statusbar.push id, "Whoooo!"
+    def add_to(menu)
+      menu.append(@item)
+    end
+  end
+end
 
-# tgraph = Gtk::DrawingArea.new
-# tgraph.set_size_request 500, 400
-# box_graphs.pack_start tgraph
+class DataGetter
 
-# gr = BlockGraph.new 500, 400
+  def initialize(delay)
+    connect(delay)
+  end
+  
+  def do_fetch(delay)
+    GLib::Timeout.add(delay)  do
+      begin
+        m = @if.fetch
+      rescue StandardError => why
+        puts "Warning: #{why}"
+      end
+      @data = m if m
+      @fetch
+    end
+  end
 
-# tgraph.signal_connect "expose-event" do
-#   gr.context = tgraph.window.create_cairo_context
-#   gr.lwidth = 5
+  def temp
+    return @data[0]
+  end
+  
+  def uptime
+    return @data[1]
+  end
 
-#   gr.draw_stick 150, 100
-#   gr.draw_stick 20, 80
-#   gr.draw_stick -60, 60
+  def disconnect
+    @fetch = false
+    @if.destroy
+  end
 
-#   true
-# end
-pbar = Gtk::ProgressBar.new
-box_data.add pbar
+  def connect(delay)
+    begin
+      @if = HTUSBInterface.new(3)
+    rescue StandardError=> why
+      puts "Failed to initialize USB interface: #{why}"
+      exit(1)
+    end
+    @fetch = true
+    @data = [0, 0]
+    do_fetch(delay)
+  end
 
-begin
-  iface = HTUSBInterface.new 3
-rescue Exception => why
-  puts "Failed to initialize USB interface: #{why}"
-  exit
+end
+
+class MainGui
+  WTITLE='rHTC'
+  MAXTEMP = 125.0
+  
+  def initialize
+    init_base
+    init_menu
+    init_statusbar
+    init_data
+
+    @dg = DataGetter.new(500)
+  end
+
+  def init_base
+    @wmain = Gtk::Window.new
+    @wmain.set_title WTITLE
+    @wmain.signal_connect("delete-event") { Gtk.main_quit }
+    
+    @box_main = Gtk::VBox.new
+    @boxes = {
+      :menu => Gtk::HBox.new,
+      :data => Gtk::HBox.new,
+      :graphs => Gtk::VBox.new,
+      :controls => Gtk::HBox.new,
+      :status => Gtk::HBox.new
+    }
+    
+    @wmain.add @box_main
+    @boxes.values.each { |box| @box_main.pack_start(box) }
+
+  end
+  
+  def init_menu
+    @menu = MenuBar.new
+    @menu.add_item("Main")
+    @menu.add_subitem("Main", "Quit") { Gtk.main_quit }
+    @menu.add_to(@boxes[:menu])
+  end
+
+  def init_statusbar    
+    @statusbar = Gtk::Statusbar.new
+    @boxes[:status].add(@statusbar)
+  end
+  
+  def init_data
+    @temp = Gtk::Label.new("Temperature")
+    @boxes[:data].add(@temp)
+    @pbar = Gtk::ProgressBar.new
+    @boxes[:data].add(@pbar)
+
+    GLib::Timeout.add(750) do
+      @pbar.fraction =  @dg.temp / 10 / MAXTEMP
+      @pbar.text = "Temperature: #{@dg.temp.to_f / 10} C"
+      true
+    end
+  end
+  
+  def begin
+    @wmain.show_all
+    Gtk.main
+  end
+  
 end
   
-
-GLib::Timeout.add 750 do
-  begin
-    t = iface.fetch
-  rescue Exception => why
-    puts why
-  end
-  t = t[0].to_f if t
-  if t then
-    pbar.fraction =  t / 10 / MAXTEMP
-    pbar.text = "Temperature: #{t/10} C"
-  end
-  true
-end
-
-wmain.show_all
-
-Gtk.main
+  gui = MainGui.new
+  gui.begin
