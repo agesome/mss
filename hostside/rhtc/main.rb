@@ -4,91 +4,7 @@ require 'gtk2'
 require 'cairo'
 require 'graph'
 require 'usbif'
-
-class MenuBar
-  def initialize
-    @bar = Gtk::MenuBar.new
-    @items = Hash.new
-    @subitems = Hash.new
-  end
-
-  def add_item(name)
-    @items[name] = MenuItem.new(name)
-    @items[name].add_to(@bar)
-  end
-
-  def add_subitem(item, name)
-    @items[item].add_subitem(name) { yield }
-  end
-
-  def add_to(box)
-    box.add(@bar)
-  end
-
-  class MenuItem
-    def initialize(name)
-      @item = Gtk::MenuItem.new(name)
-      @content = Gtk::Menu.new
-      @item.set_submenu(@content)
-      @subitems = Hash.new
-    end
-
-    def add_subitem(name)
-      @subitems[name] = Gtk::MenuItem.new(name)
-      @subitems[name].signal_connect("activate") { yield }
-      @content.append(@subitems[name])
-    end
-
-    def add_to(menu)
-      menu.append(@item)
-    end
-  end
-end
-
-class DataGetter
-
-  def initialize(delay)
-    connect(delay)
-  end
-  
-  def do_fetch(delay)
-    GLib::Timeout.add(delay)  do
-      begin
-        m = @if.fetch
-      rescue StandardError => why
-        puts "Warning: #{why}"
-      end
-      @data = m if m
-      @fetch
-    end
-  end
-
-  def temp
-    return @data[0]
-  end
-  
-  def uptime
-    return @data[1]
-  end
-
-  def disconnect
-    @fetch = false
-    @if.destroy
-  end
-
-  def connect(delay)
-    begin
-      @if = HTUSBInterface.new(3)
-    rescue StandardError=> why
-      puts "Failed to initialize USB interface: #{why}"
-      exit(1)
-    end
-    @fetch = true
-    @data = [0, 0]
-    do_fetch(delay)
-  end
-
-end
+require 'gui'
 
 class MainGui
   WTITLE='rHTC'
@@ -153,6 +69,6 @@ class MainGui
   end
   
 end
-  
-  gui = MainGui.new
-  gui.begin
+
+gui = MainGui.new
+gui.begin
