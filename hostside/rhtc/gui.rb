@@ -6,11 +6,13 @@ class MenuBar
   end
 
   def add_item(name)
+    raise "name must be String" unless name.kind_of? String
     @items[name] = MenuItem.new(name)
     @items[name].add_to(@bar)
   end
 
   def add_subitem(item, name)
+    raise "name and item must be String" unless name.kind_of? String and item.kind_of? String
     @items[item].add_subitem(name) { yield }
   end
 

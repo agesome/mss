@@ -12,14 +12,10 @@ libusb_context *ctx;
 libusb_device_handle *dh;
 char data_buffer[256];
 
-void
-Init_HTLLUSB (void);
-VALUE
-htllusb_initialize (VALUE, VALUE);
-VALUE
-htllusb_fetch_data (void);
-VALUE
-htllusb_deinit (void);
+void Init_HTLLUSB (void);
+VALUE htllusb_initialize (VALUE, VALUE);
+VALUE htllusb_fetch_data (void);
+VALUE htllusb_deinit (void);
 
 char *
 usb_decode_error (int code)
@@ -68,11 +64,12 @@ usb_init (int dlevel)
       fprintf (stderr, usb_decode_error (rc));
       return 1;
     }
-  
+
   if (dlevel >= 0 && dlevel <= 3)
     libusb_set_debug (ctx, dlevel);
   else
-    fprintf (stderr, "Warning: Tried to set abnormal debug level. Ingoring.\n");
+    fprintf (stderr,
+	     "Warning: Tried to set abnormal debug level. Ingoring.\n");
 
   return 0;
 }
@@ -90,6 +87,7 @@ usb_open_dev (void)
 VALUE
 htllusb_deinit (void)
 {
+  libusb_close (dh);
   libusb_exit (ctx);
   return Qnil;
 }
@@ -98,19 +96,17 @@ VALUE
 htllusb_fetch_data (void)
 {
   int rc;
-  
+
   rc = libusb_control_transfer (dh,
-				LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN,
-				0,
-				0,
-				0,
-				(unsigned char *) data_buffer,
-				256,
-				1000	 
-				);
+				LIBUSB_REQUEST_TYPE_VENDOR |
+				LIBUSB_RECIPIENT_DEVICE | LIBUSB_ENDPOINT_IN,
+				0, 0, 0, (unsigned char *) data_buffer, 256,
+				1000);
   if (usb_decode_error (rc) == NULL)
     return rb_str_new2 (data_buffer);
-  return Qnil;
+  if (rc == LIBUSB_ERROR_NO_DEVICE)
+    rb_raise (rb_eEOFError, usb_decode_error (rc));
+  rb_raise (rb_eIOError, usb_decode_error (rc));
 }
 
 VALUE
@@ -118,7 +114,7 @@ htllusb_initialize (VALUE self, VALUE dl)
 {
   int rc;
 
-  rc = usb_init (NUM2INT(dl));
+  rc = usb_init (NUM2INT (dl));
   if (rc)
     rb_raise (rb_eException, "Failed to initialize LibUSB");
   rc = usb_open_dev ();
@@ -130,9 +126,9 @@ htllusb_initialize (VALUE self, VALUE dl)
 void
 Init_HTLLUSB (void)
 {
-  HTLLUSB = rb_define_class("HTLLUSB", rb_cObject);
-  rb_define_method(HTLLUSB, "initialize", htllusb_initialize, 1);
-  rb_define_method(HTLLUSB, "fetch_data", htllusb_fetch_data, 0);
-  rb_define_method(HTLLUSB, "close", htllusb_deinit, 0);
+  HTLLUSB = rb_define_class ("HTLLUSB", rb_cObject);
+  rb_define_method (HTLLUSB, "initialize", htllusb_initialize, 1);
+  rb_define_method (HTLLUSB, "fetch_data", htllusb_fetch_data, 0);
+  rb_define_method (HTLLUSB, "close", htllusb_deinit, 0);
 
 }

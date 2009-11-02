@@ -15,14 +15,34 @@ class MainGui
     init_menu
     init_statusbar
     init_data
-
-    @dg = DataGetter.new(500)
+    
+    begin
+      @dg = DataGetter.new(500)
+    rescue StandardError => why
+      puts(why)
+      exit
+    end
   end
+
+  public
+
+  def begin
+    trap("INT") { exit }
+    @wmain.show_all
+    Gtk.main
+  end
+
+  def exit
+    @dg.disconnect
+    Gtk.main_quit
+  end
+
+  private
 
   def init_base
     @wmain = Gtk::Window.new
     @wmain.set_title WTITLE
-    @wmain.signal_connect("delete-event") { Gtk.main_quit }
+    @wmain.signal_connect("delete-event") { exit }
     
     @box_main = Gtk::VBox.new
     @boxes = {
@@ -41,7 +61,7 @@ class MainGui
   def init_menu
     @menu = MenuBar.new
     @menu.add_item("Main")
-    @menu.add_subitem("Main", "Quit") { Gtk.main_quit }
+    @menu.add_subitem("Main", "Quit") { exit }
     @menu.add_to(@boxes[:menu])
   end
 
@@ -51,8 +71,6 @@ class MainGui
   end
   
   def init_data
-    @temp = Gtk::Label.new("Temperature")
-    @boxes[:data].add(@temp)
     @pbar = Gtk::ProgressBar.new
     @boxes[:data].add(@pbar)
 
@@ -61,11 +79,6 @@ class MainGui
       @pbar.text = "Temperature: #{@dg.temp.to_f / 10} C"
       true
     end
-  end
-  
-  def begin
-    @wmain.show_all
-    Gtk.main
   end
   
 end

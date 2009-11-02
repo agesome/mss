@@ -3,7 +3,8 @@ require 'HTLLUSB'
 # a simple wrap for HTLLUSB
 class HTUSBInterface
   
-  def initialize dbg_level
+  def initialize(dbg_level)
+    raise "dbg_level must be Fixnum" unless dbg_level.kind_of? Fixnum
     begin
       @dev = HTLLUSB.new dbg_level
     rescue StandardError => why
@@ -13,12 +14,10 @@ class HTUSBInterface
 
   def fetch
     begin
-      m = @dev.fetch_data
-    rescue StandardError
-      raise StandardError, "Fetch failure"
+      return @dev.fetch_data.unpack "s*"
+    rescue IOError => why
+      raise StandardError, "Fetch failure: #{why.to_s}"
     end
-    return m.unpack "s*" if m
-    return nil
   end
   
   def destroy
@@ -30,6 +29,7 @@ end
 class DataGetter
 
   def initialize(delay)
+    raise "delay must be Fixnum" unless delay.kind_of? Fixnum
     connect(delay)
   end
   
@@ -38,9 +38,10 @@ class DataGetter
       begin
         m = @if.fetch
       rescue StandardError => why
-        puts "Warning: #{why}"
+        puts "Warning: #{why.to_s}"
+      else
+        @data = m
       end
-      @data = m if m
       @fetch
     end
   end
@@ -59,11 +60,11 @@ class DataGetter
   end
 
   def connect(delay)
+    raise "delay must be Fixnum" unless delay.kind_of? Fixnum
     begin
       @if = HTUSBInterface.new(3)
     rescue StandardError=> why
-      puts "Failed to initialize USB interface: #{why}"
-      exit(1)
+      raise StandardError, "Failed to initialize USB interface: #{why.to_s}"
     end
     @fetch = true
     @data = [0, 0]
