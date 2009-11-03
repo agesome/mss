@@ -116,10 +116,10 @@ htllusb_initialize (VALUE self, VALUE dl)
 
   rc = usb_init (NUM2INT (dl));
   if (rc)
-    rb_raise (rb_eException, "Failed to initialize LibUSB");
+    rb_raise (rb_eException, "Failed to initialize LibUSB.");
   rc = usb_open_dev ();
   if (rc)
-    rb_raise (rb_eException, "Failed to open device");
+    rb_raise (rb_eException, "Failed to open device.");
   return self;
 }
 

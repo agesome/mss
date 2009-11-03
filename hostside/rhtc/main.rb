@@ -9,6 +9,7 @@ require 'gui'
 class MainGui
   WTITLE='rHTC'
   MAXTEMP = 125.0
+  DEBUG = 0
   
   def initialize
     init_base
@@ -19,8 +20,8 @@ class MainGui
     begin
       @dg = DataGetter.new(500)
     rescue StandardError => why
-      puts(why)
-      exit
+      puts(why.to_s)
+      Kernel::exit
     end
   end
 
@@ -81,6 +82,55 @@ class MainGui
     end
   end
   
+  class DataGetter
+    
+    def initialize(delay)
+      raise "delay must be Fixnum" unless delay.kind_of? Fixnum
+      connect(delay)
+    end
+    
+    def do_fetch(delay)
+      GLib::Timeout.add(delay) do
+        begin
+          m = @if.fetch
+          
+        rescue EOFError => why
+          puts "Exiting: #{why.to_s}"
+          exit
+        rescue StandardError => why
+          puts "Warning: #{why.to_s}"
+        else
+          @data = m
+        end
+        @fetch
+      end
+    end
+    
+    def temp
+      return @data[0]
+    end
+    
+    def uptime
+      return @data[1]
+    end
+    
+    def disconnect
+      @fetch = false
+      @if.destroy
+    end
+    
+    def connect(delay)
+      raise "delay must be Fixnum" unless delay.kind_of? Fixnum
+      begin
+        @if = HTUSBInterface.new(DEBUG)
+      rescue StandardError => why
+        raise StandardError, "Failed to initialize USB interface: #{why.to_s}"
+      end
+      @fetch = true
+      @data = [0, 0]
+      do_fetch(delay)
+    end
+  end
 end
 
 gui = MainGui.new
