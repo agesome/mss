@@ -17,10 +17,14 @@
 #define TEMP_REG_SENSOR 0
 #define TEMP_REG_PORT PORTA
 #define TEMP_REG_PIN PA4
-#define B0_PIN PIND
-#define B0_BIT PD3
-#define B1_PIN PIND
-#define B1_BIT PD4
+
+#define BUTTON0_PIN PIND
+#define BUTTON0_BIT PD3
+#define BUTTON1_PIN PIND
+#define BUTTON1_BIT PD4
+
+#define VCC 5.05
+
 /* A is the port, B is the pin to check */
 #define ISCLEAR(A, B) !(A & (~A ^ _BV(B)) )
 
@@ -34,6 +38,8 @@
 #include <humidity.h>
 #include <usbdrv.h>
 #include <temperature.h>
+#include <i2cmaster.h>
+#include <lib302dl.h>
 
 static char display[LCD_DISP_LENGTH * LCD_LINES + 2];
 static char *d_status, *d_content;
@@ -61,35 +67,30 @@ configure (void)
   usbInit ();
   sei();
   /* end of usb stuff  */
-  
+
   /* configure timer 2 for calling usbPoll() */
   TIMSK2 = _BV(TOIE2);			       /* overflow interrupt enabled */
   TCCR2B =  _BV(CS02) | _BV(CS01) | _BV(CS00); /* set prescaler to 1024, timer starts */
-  
+
   /* display configuration */
   d_status = &display[0];
   display[LCD_DISP_LENGTH] = '\0';
   d_content = &display[LCD_DISP_LENGTH + 1];
   display[LCD_DISP_LENGTH * 2 + 1] = '\0';
-  
+
   lcd_init (LCD_DISP_ON);
   /* end display configuration */
 
   /* temperature sensors */
   ns = search_sensors ();
+  d_status_update ("Temp. sensors:");
   if (ns)
-    {
-      d_status_update ("Temp. sensors:");
-      d_content_update ("%d found.", ns);
-    }
+    d_content_update ("%d found.", ns);
   else
-    {
-      d_status_update ("Temp. sensors:");
-      d_content_update ("not found.");
-    }
+    d_content_update ("not found.");
   d_update ();
   _delay_ms (1000);
-  
+ 
   /* configure timer 0 for button state detection */
   TIMSK0 = _BV(TOIE0);		  /* enable overflow interrupt */
   TCCR0B = _BV(CS02) | _BV(CS00); /* set prescaler to 1024, timer starts */
@@ -99,12 +100,30 @@ configure (void)
   /* reaching this with a prescaler of 256 and frequency of 20Mhz five times is exactly one second */
   OCR1A = 15625;
   TCCR1B = _BV(CS12) | _BV(WGM12);
+
+  /* ADC configuration goes here */
+  /* ADMUX = _BV(REFS0); */
+  /* ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0); */
+  /* PORTC |= _BV(PC0) | _BV(PC1); */
+
+  /* twi/accelerometer configuration */
+  i2c_init ();
+  d_status_update ("Accelerometer:");
+  if (lis_initialize (0, 1, 0))
+    d_content_update ("not found.");
+  else
+    d_content_update ("found.");
+  d_update ();
+  _delay_ms (1000);
+  d_content_update (" ");
+  d_status_update (" ");
+  d_update ();
 }
 
 ISR (TIMER1_COMPA_vect)
 {
   sei ();
-  
+
   uptime_cnt++;
 
   if (uptime_cnt == 5)
@@ -117,17 +136,17 @@ ISR (TIMER1_COMPA_vect)
 ISR (TIMER0_OVF_vect)
 {
   sei ();
-  
+
   /* button 0 */
   if (!button_0)
     {
       if (!wu0)
 	{
-	  if (ISCLEAR(B0_PIN, B0_BIT))
+	  if (ISCLEAR(BUTTON0_PIN, BUTTON0_BIT))
 	    wu0 = 1;
 	}
       else
-	if (ISCLEAR(B0_PIN, B0_BIT))
+	if (ISCLEAR(BUTTON0_PIN, BUTTON0_BIT))
 	  {
 	    button_0 = 1;
 	    wu0 = 0;
@@ -136,7 +155,7 @@ ISR (TIMER0_OVF_vect)
     }
   else
     {
-      if (!ISCLEAR(B0_PIN, B0_BIT) && !sb0)
+      if (!ISCLEAR(BUTTON0_PIN, BUTTON0_BIT) && !sb0)
 	button_0 = 0;
     }
 
@@ -145,11 +164,11 @@ ISR (TIMER0_OVF_vect)
     {
       if (!wu1)
 	{
-	  if (ISCLEAR(B1_PIN, B1_BIT))
+	  if (ISCLEAR(BUTTON1_PIN, BUTTON1_BIT))
 	    wu1 = 1;
 	}
       else
-	if (ISCLEAR(B1_PIN, B1_BIT))
+	if (ISCLEAR(BUTTON1_PIN, BUTTON1_BIT))
 	  {
 	    button_1 = 1;
 	    wu1 = 1;
@@ -158,15 +177,15 @@ ISR (TIMER0_OVF_vect)
     }
   else
     {
-      if (!ISCLEAR(B1_PIN, B1_BIT) && !sb1)
+      if (!ISCLEAR(BUTTON1_PIN, BUTTON1_BIT) && !sb1)
 	button_1 = 1;
-    }  
+    }
 }
 
 ISR (TIMER2_OVF_vect)
 {
   cli ();
-  
+
   usb_delay++;
 
   /* timer 2 overflows in ~13 msec, so we'll call usbPoll() each 39 msec, which is just fine */
@@ -219,7 +238,7 @@ void
 d_content_update(char *content, ...)
 {
   va_list ap;
-  
+
   va_start(ap, content);
   vsnprintf(d_content, LCD_DISP_LENGTH + 1, content, ap);
   va_end(ap);
@@ -230,22 +249,13 @@ int
 main (void)
 {
   configure ();
-  d_content_update(" ");
-  
+
+  d_status_update("X accel:");
  mainloop:
-  s0 = gtemp (0);
-  d_status_update ("uptime: %d sec.", uptime);
-  d_content_update ("s0: %d", s0);
+  d_content_update ("%d", lis_rx ());
   d_update ();
-  /* if (button_0) */
-  /*   { */
-  /*     np++; */
-  /*     wu0 = 0; */
-  /*     sb0 = 0; */
-  /*   } */
-  _delay_ms(150);
+  _delay_ms(80);
   goto mainloop;
-  
 }
 
 usbMsgLen_t
