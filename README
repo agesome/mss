@@ -1,5 +1,4 @@
-firmware/ - contains firmware source code;
-hostside/ - constains hostside tools for interaction with ht-217;
+src/ - contains firmware source code;
 schematics/ - contains hardware schematics, they are quite incomplete but may give you an overview; drawn in eeschema[0]
 
 [0]: http://kicad.sourceforge.net/wiki/index.php/About_KiCad#eeschema
