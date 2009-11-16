@@ -102,9 +102,9 @@ configure (void)
   TCCR1B = _BV(CS12) | _BV(WGM12);
 
   /* ADC configuration goes here */
-  /* ADMUX = _BV(REFS0); */
-  /* ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0); */
-  /* PORTC |= _BV(PC0) | _BV(PC1); */
+  ADMUX = _BV(REFS0);
+  ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+  PORTC |= _BV(PC0) | _BV(PC1);
 
   /* twi/accelerometer configuration */
   i2c_init ();
