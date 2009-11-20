@@ -1,0 +1,3 @@
+[submodule "src/lib302dl"]
+	path = src/lib302dl
+	url = git://github.com/age/lib302dl.git
