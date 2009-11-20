@@ -90,7 +90,7 @@ configure (void)
     d_content_update ("not found.");
   d_update ();
   _delay_ms (1000);
- 
+
   /* configure timer 0 for button state detection */
   TIMSK0 = _BV(TOIE0);		  /* enable overflow interrupt */
   TCCR0B = _BV(CS02) | _BV(CS00); /* set prescaler to 1024, timer starts */
@@ -250,11 +250,14 @@ main (void)
 {
   configure ();
 
-  d_status_update("X accel:");
+  int x, y, z;
+
  mainloop:
-  d_content_update ("%d", lis_rx ());
-  d_update ();
-  _delay_ms(80);
+  x = lis_rx ();
+  y = lis_ry ();
+  z = lis_rz ();
+  d_content_update ("%4d %4d %4d", x, y, z);
+  _delay_ms(160);
   goto mainloop;
 }
 

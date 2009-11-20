@@ -35,12 +35,12 @@ lis_initialize (uint8_t high_datarate, uint8_t dopowerup, uint8_t setfullscale)
   if (lis_rread (LIS_WHOAMI) != LIS_WHOAMI_VALUE)
     return 1;
 
+  if (dopowerup)
+    lis_rwrite (LIS_CR1, _BV(LIS_PD));
   if (high_datarate)
     lis_rwrite (LIS_CR1, _BV(LIS_DR));
   if (setfullscale)
     lis_rwrite (LIS_CR1, _BV(LIS_FS));
-  if (dopowerup)
-    lis_rwrite (LIS_CR1, _BV(LIS_PD));
 
   return 0;
 }
@@ -49,4 +49,16 @@ int8_t
 lis_rx (void)
 {
   return lis_rread (LIS_OX);
+}
+
+int8_t
+lis_ry (void)
+{
+  return lis_rread (LIS_OY);
+}
+
+int8_t
+lis_rz (void)
+{
+  return lis_rread (LIS_OZ);
 }
