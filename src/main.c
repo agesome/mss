@@ -25,6 +25,8 @@
 
 #define VCC 5.05
 
+#define H_SENSORS 1
+
 /* A is the port, B is the pin to check */
 #define ISCLEAR(A, B) !(A & (~A ^ _BV(B)) )
 
@@ -43,15 +45,16 @@
 
 static char display[LCD_DISP_LENGTH * LCD_LINES + 2];
 static char *d_status, *d_content;
-static uint8_t d_status_ch = 0, d_content_ch = 0, uptime_cnt = 0;
+static uint8_t d_status_ch = 0, d_content_ch = 0;
 static uint16_t usb_requests = 0, usb_delay = 0;
+static unsigned char usbbuf[64];
 static uint8_t button_0 = 0, button_1 = 0, sb0, sb1;
-/* was-up indicators */
 static uint8_t wu0 = 0, wu1 = 0;
 static uint8_t ns = 0;
-static int16_t s0 = 0;
-static uint16_t uptime = 0;
-static unsigned char usbbuf[64];
+static double t_val[2];
+static double h_val[2];
+static int16_t accel[3];
+enum xyz { X, Y, Z };
 
 void d_update (void);
 void d_status_update(char *content, ...);
@@ -245,29 +248,66 @@ d_content_update(char *content, ...)
   d_content_ch = 1;
 }
 
+void
+fetch (void)
+{
+  uint8_t i;
+  
+  for (i = 0; i <= ns - 1; i++)
+    t_val[i] = gtemp (i) / 10;
+  for (i = 0; i <= H_SENSORS - 1; i++)
+    h_val[i] = mhumid (i) / 10;
+  accel[X] = lis_rx ();
+  accel[Y] = lis_ry ();
+  accel[Z] = lis_rz ();
+}
+
 int
 main (void)
 {
   configure ();
 
-  int x, y, z;
+  uint8_t choice = 0;
+  char temp_format[] = "T%d: %2.1f C";
+  char humid_format[] = "Fi%d: %2.1f %";
+  char accel_format[] = "X:Y:Z %d:%d:%d";
 
  mainloop:
-  x = lis_rx ();
-  y = lis_ry ();
-  z = lis_rz ();
-  d_content_update ("%4d %4d %4d", x, y, z);
-  _delay_ms(160);
+  if (button_0)
+    {
+      choice++;
+      button_0 = 0;
+    }
+  fetch ();
+  switch (choice)
+    {
+    case 0:
+    case 1:
+      d_status_update ("Temperature");
+      d_content_update (temp_format, 1, (double) t_val[0]);
+    case 2:
+      d_status_update ("Humidity");
+      d_content_update (humid_format, choice + 1, h_val[choice] - 2);
+    case 3:
+      d_status_update ("Acceleration");
+      d_status_update (accel_format, accel[X], accel[Y], accel[Z]);
+    default:
+      choice = 0;
+    }
+  d_update ();
+  _delay_ms (30);
   goto mainloop;
 }
 
 usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
-  memcpy(usbbuf, (void *)&s0, sizeof(s0));
-  memcpy(usbbuf + sizeof(s0), (void *)&uptime, sizeof(uptime));
-  usbbuf[sizeof(s0) + sizeof(uptime) + 1] = '\0';
+  double t = t_val[0];
+  memcpy(usbbuf, (void *)&t, sizeof(t));
+  /* memcpy(usbbuf + sizeof(t_val[0]), (void *)&h_val[0], sizeof(h_val[0])); */
+  usbbuf[sizeof(t) + 1] = '\0';//+ sizeof(h_val[0]) + 1] = '\0';
   usbMsgPtr = usbbuf;
   usb_requests++;
   return strlen ((char *) usbbuf);
+  lcd_puts("wee!");
 }
