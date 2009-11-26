@@ -41,14 +41,13 @@ uint16_t
 mhumid (short pin)
 {
   adc_startc (pin);
-  u = (5.07 / 256) * ADCH;
-  res = (4600 * u) / (5.07 - u);
+  u = (5.07 / 1024) * ADCH;
+  res = (6000 * u) / (5.07 - u);
 
   if (res >= 1000000)
     relH = 30 - res / 529100;
   else if (res >= 100000 && res <= 1000000)
     relH = 48 - res / 50000;
-
   else if (res <= 100000 && res >= 10000)
     relH = 75 - res / 3333;
   else if (res <= 10000 && res >= 200)
