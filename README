@@ -1,4 +1,3 @@
-src/ - contains firmware source code;
-schematics/ - contains hardware schematics, they are quite incomplete but may give you an overview; drawn in eeschema[0]
+MSS is a project to create a device that would support different kinds of operation on data from multiple sensors. (Multi Sensor Station).
 
-[0]: http://kicad.sourceforge.net/wiki/index.php/About_KiCad#eeschema
+This directory contains project's firmware code. See COPYING file for lcense details.

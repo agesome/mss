@@ -1,4 +1,5 @@
 /* Copyright 2009 Evgeny Grablyk <evgeny.grablyk@gmail.com>
+   
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
@@ -265,13 +266,14 @@ fetch (void)
 int
 main (void)
 {
-  configure ();
-
   uint8_t choice = 0;
   char temp_format[] = "T%d: %2.1f C";
   char humid_format[] = "Fi%d: %2.1f %";
   char accel_format[] = "X:Y:Z %d:%d:%d";
 
+  configure ();
+
+  /* not yet finished */
  mainloop:
   if (button_0)
     {
@@ -309,5 +311,4 @@ usbFunctionSetup (unsigned char setupData[8])
   usbMsgPtr = usbbuf;
   usb_requests++;
   return strlen ((char *) usbbuf);
-  lcd_puts("wee!");
 }
