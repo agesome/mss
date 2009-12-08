@@ -56,11 +56,12 @@ static double t_val[2];
 static double h_val[2];
 static int16_t accel[3];
 static uint16_t uptime_cnt = 0, uptime = 0;
-enum xyz { X, Y, Z };
+enum xyz
+{ X, Y, Z };
 
 void d_update (void);
-void d_status_update(char *content, ...);
-void d_content_update(char *content, ...);
+void d_status_update (char *content, ...);
+void d_content_update (char *content, ...);
 
 void
 configure (void)
@@ -70,12 +71,12 @@ configure (void)
   _delay_ms (100);
   usbDeviceConnect ();
   usbInit ();
-  sei();
+  sei ();
   /* end of usb stuff  */
 
   /* configure timer 2 for calling usbPoll() */
-  TIMSK2 = _BV(TOIE2);			       /* overflow interrupt enabled */
-  TCCR2B =  _BV(CS02) | _BV(CS01) | _BV(CS00); /* set prescaler to 1024, timer starts */
+  TIMSK2 = _BV (TOIE2);		/* overflow interrupt enabled */
+  TCCR2B = _BV (CS02) | _BV (CS01) | _BV (CS00);	/* set prescaler to 1024, timer starts */
 
   /* display configuration */
   d_status = &display[0];
@@ -97,19 +98,19 @@ configure (void)
   _delay_ms (1000);
 
   /* configure timer 0 for button state detection */
-  TIMSK0 = _BV(TOIE0);		  /* enable overflow interrupt */
-  TCCR0B = _BV(CS02) | _BV(CS00); /* set prescaler to 1024, timer starts */
-  PORTD |= _BV(PD3) | _BV(PD4);	  /* pullup for button 0 */
+  TIMSK0 = _BV (TOIE0);		/* enable overflow interrupt */
+  TCCR0B = _BV (CS02) | _BV (CS00);	/* set prescaler to 1024, timer starts */
+  PORTD |= _BV (PD3) | _BV (PD4);	/* pullup for button 0 */
 
-  TIMSK1 = _BV(OCIE1A);
+  TIMSK1 = _BV (OCIE1A);
   /* reaching this with a prescaler of 256 and frequency of 20Mhz five times is exactly one second */
   OCR1A = 15625;
-  TCCR1B = _BV(CS12) | _BV(WGM12);
+  TCCR1B = _BV (CS12) | _BV (WGM12);
 
   /* ADC configuration goes here */
-  ADMUX = _BV(REFS0);
-  ADCSRA = _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
-  PORTC |= _BV(PC0) | _BV(PC1);
+  ADMUX = _BV (REFS0);
+  ADCSRA = _BV (ADEN) | _BV (ADPS2) | _BV (ADPS1) | _BV (ADPS0);
+  PORTC |= _BV (PC0) | _BV (PC1);
 
   /* twi/accelerometer configuration */
   i2c_init ();
@@ -147,20 +148,19 @@ ISR (TIMER0_OVF_vect)
     {
       if (!wu0)
 	{
-	  if (ISCLEAR(BUTTON0_PIN, BUTTON0_BIT))
+	  if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
 	    wu0 = 1;
 	}
-      else
-	if (ISCLEAR(BUTTON0_PIN, BUTTON0_BIT))
-	  {
-	    button_0 = 1;
-	    wu0 = 0;
-	    sb0 = 1;
-	  }
+      else if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+	{
+	  button_0 = 1;
+	  wu0 = 0;
+	  sb0 = 1;
+	}
     }
   else
     {
-      if (!ISCLEAR(BUTTON0_PIN, BUTTON0_BIT) && !sb0)
+      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && !sb0)
 	button_0 = 0;
     }
 
@@ -169,20 +169,19 @@ ISR (TIMER0_OVF_vect)
     {
       if (!wu1)
 	{
-	  if (ISCLEAR(BUTTON1_PIN, BUTTON1_BIT))
+	  if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
 	    wu1 = 1;
 	}
-      else
-	if (ISCLEAR(BUTTON1_PIN, BUTTON1_BIT))
-	  {
-	    button_1 = 1;
-	    wu1 = 1;
-	    sb1 = 1;
-	  }
+      else if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
+	{
+	  button_1 = 1;
+	  wu1 = 1;
+	  sb1 = 1;
+	}
     }
   else
     {
-      if (!ISCLEAR(BUTTON1_PIN, BUTTON1_BIT) && !sb1)
+      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT) && !sb1)
 	button_1 = 1;
     }
 }
@@ -229,24 +228,24 @@ d_update (void)
 }
 
 void
-d_status_update(char *content, ...)
+d_status_update (char *content, ...)
 {
   va_list ap;
 
-  va_start(ap, content);
-  vsnprintf(d_status, LCD_DISP_LENGTH + 1, content, ap);
-  va_end(ap);
+  va_start (ap, content);
+  vsnprintf (d_status, LCD_DISP_LENGTH + 1, content, ap);
+  va_end (ap);
   d_status_ch = 1;
 }
 
 void
-d_content_update(char *content, ...)
+d_content_update (char *content, ...)
 {
   va_list ap;
 
-  va_start(ap, content);
-  vsnprintf(d_content, LCD_DISP_LENGTH + 1, content, ap);
-  va_end(ap);
+  va_start (ap, content);
+  vsnprintf (d_content, LCD_DISP_LENGTH + 1, content, ap);
+  va_end (ap);
   d_content_ch = 1;
 }
 
@@ -254,7 +253,7 @@ void
 fetch (void)
 {
   uint8_t i;
-  
+
   for (i = 0; i <= ns - 1; i++)
     t_val[i] = gtemp (i) / 10;
   for (i = 0; i <= H_SENSORS - 1; i++)
@@ -275,7 +274,7 @@ main (void)
   configure ();
 
   /* not yet finished */
- mainloop:
+mainloop:
   if (button_0)
     {
       choice++;
@@ -306,9 +305,9 @@ usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
   double t = t_val[0];
-  memcpy(usbbuf, (void *)&t, sizeof(t));
+  memcpy (usbbuf, (void *) &t, sizeof (t));
   /* memcpy(usbbuf + sizeof(t_val[0]), (void *)&h_val[0], sizeof(h_val[0])); */
-  usbbuf[sizeof(t) + 1] = '\0';//+ sizeof(h_val[0]) + 1] = '\0';
+  usbbuf[sizeof (t) + 1] = '\0';	//+ sizeof(h_val[0]) + 1] = '\0';
   usbMsgPtr = usbbuf;
   usb_requests++;
   return strlen ((char *) usbbuf);

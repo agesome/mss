@@ -612,20 +612,20 @@ lcd_init (uint8_t dispAttr)
   LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);	// _BV(LCD_FUNCTION)>>4;
   LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);	// _BV(LCD_FUNCTION_8BIT)>>4;
   lcd_e_toggle ();
-  _delay_us (4992);			/* _delay_us, busy flag can't be checked here */
+  _delay_us (4992);		/* _delay_us, busy flag can't be checked here */
 
   /* repeat last command */
   lcd_e_toggle ();
-  _delay_us (64);			/* _delay_us, busy flag can't be checked here */
+  _delay_us (64);		/* _delay_us, busy flag can't be checked here */
 
   /* repeat last command a third time */
   lcd_e_toggle ();
-  _delay_us (64);			/* _delay_us, busy flag can't be checked here */
+  _delay_us (64);		/* _delay_us, busy flag can't be checked here */
 
   /* now configure for 4bit mode */
   LCD_DATA0_PORT &= ~_BV (LCD_DATA0_PIN);	// LCD_FUNCTION_4BIT_1LINE>>4
   lcd_e_toggle ();
-  _delay_us (64);			/* some displays need this additional delay */
+  _delay_us (64);		/* some displays need this additional delay */
 
   lcd_command (LCD_DISP_OFF);	/* display off                  */
   lcd_clrscr ();		/* display clear                */
