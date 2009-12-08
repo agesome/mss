@@ -55,6 +55,7 @@ static uint8_t ns = 0;
 static double t_val[2];
 static double h_val[2];
 static int16_t accel[3];
+static uint16_t uptime_cnt = 0, uptime = 0;
 enum xyz { X, Y, Z };
 
 void d_update (void);
