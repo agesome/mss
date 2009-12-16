@@ -149,12 +149,14 @@ ISR (TIMER1_COMPA_vect)
     }
 }
 
+static uint8_t b0_press_delay = 0;
+
 ISR (TIMER0_OVF_vect)
 {
   sei ();
 
   /* button 0 */
-  if (!button_0)
+  if (!button_0 && b0_press_delay > 5)
     {
       if (!b0_was_up)
 	{
@@ -165,15 +167,18 @@ ISR (TIMER0_OVF_vect)
 	{
 	  button_0 = 1;
 	  b0_was_up = 0;
-	  /* sb0 = 1; */
+	  b0_press_delay = 0;
 	}
+    }
+  else if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+    {
+      button_0 = 0;
     }
   else
     {
-      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))// && !sb0)
-	button_0 = 0;
+      b0_press_delay++;
     }
-
+  
   /* button 1 */
   if (!button_1)
     {
