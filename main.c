@@ -44,16 +44,26 @@
 #include <i2cmaster.h>
 #include <lib302dl.h>
 
+/* display buffer */
 static char display[LCD_DISP_LENGTH * LCD_LINES + 2];
+/* pointers to lines, they're set in configure () */
 static char *d_status, *d_content;
+/* change indicators, so display is not constantly updated */
 static uint8_t d_status_ch = 0, d_content_ch = 0;
-static uint16_t usb_requests = 0, usb_delay = 0;
+/* delay between usbPoll () calls */
+static uint16_t usb_delay = 0;
+/* usb data buffer */
 static unsigned char usbbuf[64];
-static uint8_t button_0 = 0, button_1 = 0, sb0, sb1;
-static uint8_t wu0 = 0, wu1 = 0;
-static uint8_t ns = 0;
-static double t_val[2];
-static double h_val[2];
+/* states of buttons */
+static uint8_t button_0 = 0, button_1 = 0;
+/* sb0, sb1; */
+static uint8_t b0_was_up = 0, b1_was_up = 0;
+/* number of detected temperature sensors, set in configure () */
+static uint8_t t_sensors_count = 0;
+/* temperature and humidity data */
+/* number of sensors is unknown at compile time, so just pick some. */
+static double t_val[H_SENSORS], h_val[3]; 
+/* acceleration data */
 static int16_t accel[3];
 static uint16_t uptime_cnt = 0, uptime = 0;
 enum xyz
@@ -88,10 +98,10 @@ configure (void)
   /* end display configuration */
 
   /* temperature sensors */
-  ns = search_sensors ();
+  t_sensors_count = search_sensors ();
   d_status_update ("Temp. sensors:");
-  if (ns)
-    d_content_update ("%d found.", ns);
+  if (t_sensors_count)
+    d_content_update ("%d found.", t_sensors_count);
   else
     d_content_update ("not found.");
   d_update ();
@@ -146,42 +156,42 @@ ISR (TIMER0_OVF_vect)
   /* button 0 */
   if (!button_0)
     {
-      if (!wu0)
+      if (!b0_was_up)
 	{
 	  if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
-	    wu0 = 1;
+	    b0_was_up = 1;
 	}
       else if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
 	{
 	  button_0 = 1;
-	  wu0 = 0;
-	  sb0 = 1;
+	  b0_was_up = 0;
+	  /* sb0 = 1; */
 	}
     }
   else
     {
-      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && !sb0)
+      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))// && !sb0)
 	button_0 = 0;
     }
 
   /* button 1 */
   if (!button_1)
     {
-      if (!wu1)
+      if (!b1_was_up)
 	{
 	  if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
-	    wu1 = 1;
+	    b1_was_up = 1;
 	}
       else if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
 	{
 	  button_1 = 1;
-	  wu1 = 1;
-	  sb1 = 1;
+	  b1_was_up = 1;
+	  /* sb1 = 1; */
 	}
     }
   else
     {
-      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT) && !sb1)
+      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT)) //&& !sb1)
 	button_1 = 1;
     }
 }
@@ -254,7 +264,7 @@ fetch (void)
 {
   uint8_t i;
 
-  for (i = 0; i <= ns - 1; i++)
+  for (i = 0; i <= t_sensors_count - 1; i++)
     t_val[i] = gtemp (i) / 10;
   for (i = 0; i <= H_SENSORS - 1; i++)
     h_val[i] = mhumid (i) / 10;
@@ -309,6 +319,5 @@ usbFunctionSetup (unsigned char setupData[8])
   /* memcpy(usbbuf + sizeof(t_val[0]), (void *)&h_val[0], sizeof(h_val[0])); */
   usbbuf[sizeof (t) + 1] = '\0';	//+ sizeof(h_val[0]) + 1] = '\0';
   usbMsgPtr = usbbuf;
-  usb_requests++;
   return strlen ((char *) usbbuf);
 }
