@@ -281,9 +281,9 @@ int
 main (void)
 {
   uint8_t choice = 0;
-  char temp_format[] = "T%d: %2.1f C";
-  char humid_format[] = "Fi%d: %2.1f %";
-  char accel_format[] = "X:Y:Z %d:%d:%d";
+  char temp_format[] = "T %d: %2.1f C";
+  char humid_format[] = "Fi %d: %2.1f %";
+  char accel_format[] = "XYZ %d:%d:%d";
 
   configure ();
 
@@ -300,16 +300,28 @@ main (void)
     {
     case 0:
     case 1:
-      d_status_update ("Temperature");
-      d_content_update (temp_format, 1, (double) t_val[0]);
+      {
+	d_status_update ("Temperature");
+	d_content_update (temp_format, 1, (double) t_val[0]);
+	break;
+      }
     case 2:
-      d_status_update ("Humidity");
-      d_content_update (humid_format, choice + 1, h_val[choice] - 2);
+      {
+	d_status_update ("Humidity");
+	d_content_update (humid_format, choice - 2, h_val[choice] - 2);
+	break;
+      }
     case 3:
-      d_status_update ("Acceleration");
-      d_status_update (accel_format, accel[X], accel[Y], accel[Z]);
-    default:
-      choice = 0;
+      {
+	d_status_update ("Acceleration");
+	d_status_update (accel_format, accel[X], accel[Y], accel[Z]);
+	break;
+      }
+    case 4:
+      {
+	choice = 0;
+	break;
+      }
     }
   d_update ();
   _delay_ms (30);
