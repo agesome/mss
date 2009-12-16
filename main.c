@@ -25,8 +25,8 @@
 #define BUTTON1_BIT PD4
 
 #define VCC 5.05
-
 #define H_SENSORS 1
+#define B_PRESS_DELAY 13
 
 /* A is the port, B is the pin to check */
 #define ISCLEAR(A, B) !(A & (~A ^ _BV(B)) )
@@ -65,7 +65,11 @@ static uint8_t t_sensors_count = 0;
 static double t_val[H_SENSORS], h_val[3]; 
 /* acceleration data */
 static int16_t accel[3];
+/* delay between repeated detection (when buttons are kept pressed) */
+static uint8_t b0_press_delay = 0, b1_press_delay = 0;
+/* uptime indicates, uh, uptime (in seconds). uptime_cnt is evil, don't touch it */
 static uint16_t uptime_cnt = 0, uptime = 0;
+/* enumeration of accel array contents ;) */
 enum xyz
 { X, Y, Z };
 
@@ -149,55 +153,50 @@ ISR (TIMER1_COMPA_vect)
     }
 }
 
-static uint8_t b0_press_delay = 0;
-
 ISR (TIMER0_OVF_vect)
 {
   sei ();
 
   /* button 0 */
-  if (!button_0 && b0_press_delay > 5)
+  if (!button_0 && b0_press_delay > 15)
     {
-      if (!b0_was_up)
-	{
-	  if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
-	    b0_was_up = 1;
-	}
-      else if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+      if (!b0_was_up && ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+	b0_was_up = 1;
+      else if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && b0_was_up)
 	{
 	  button_0 = 1;
-	  b0_was_up = 0;
-	  b0_press_delay = 0;
+	  b0_was_up = b0_press_delay = 0;
 	}
-    }
-  else if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
-    {
-      button_0 = 0;
+      else if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && b0_was_up)
+	b0_was_up = 0;
     }
   else
     {
-      b0_press_delay++;
+      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+	button_0 = 0;
+      else
+	b0_press_delay++;
     }
   
   /* button 1 */
-  if (!button_1)
+  if (!button_1 && b1_press_delay > 15)
     {
-      if (!b1_was_up)
-	{
-	  if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
-	    b1_was_up = 1;
-	}
-      else if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
+      if (!b1_was_up && ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
+	b1_was_up = 1;
+      else if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT) && b0_was_up)
 	{
 	  button_1 = 1;
-	  b1_was_up = 1;
-	  /* sb1 = 1; */
+	  b1_was_up = b1_press_delay = 0;
 	}
+      else if (!ISCLEAR (BUTTON0_PIN, BUTTON1_BIT) && b1_was_up)
+	b1_was_up = 0;
     }
   else
     {
-      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT)) //&& !sb1)
-	button_1 = 1;
+      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
+	button_1 = 0;
+      else
+	b1_press_delay++;
     }
 }
 
@@ -289,12 +288,13 @@ main (void)
   configure ();
 
   /* not yet finished */
-mainloop:
+ mainloop:
   if (button_0)
     {
       choice++;
       button_0 = 0;
     }
+  /* d_status_update ("%d", choice); */
   fetch ();
   switch (choice)
     {
