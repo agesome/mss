@@ -1,5 +1,1 @@
-firmware/.cproject
-firmware/.project
-firmware/Release/
-hostside/ghtc/.cproject
-hostside/ghtc/.project
+*.o
