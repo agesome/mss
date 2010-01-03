@@ -19,9 +19,9 @@
 #define TEMP_REG_PORT PORTA
 #define TEMP_REG_PIN PA4
 
-#define BUTTON0_PIN PIND
+/* buttons are on same port, that simplifies things. */
+#define BUTTON_PIN PIND
 #define BUTTON0_BIT PD3
-#define BUTTON1_PIN PIND
 #define BUTTON1_BIT PD4
 #define BUTTON_CLICK_DELAY 35
 
@@ -170,30 +170,57 @@ ISR (TIMER1_COMPA_vect)
  */
 ISR (TIMER0_OVF_vect)
 {
+  uint8_t bit, *button, *delay, *wasup, run = 0;
+  
   sei ();
-
-  if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
+  
+ run:
+  if (!run)
     {
-      b0_press_delay++;
-      if (b0_was_up && b0_press_delay >= BUTTON_CLICK_DELAY)
+      bit = BUTTON0_BIT;
+      button = &button_0;
+      delay = &b0_press_delay;
+      wasup = &b0_was_up;
+      run++;
+      goto check;
+    }
+  else if (run == 1)
+    {
+      bit = BUTTON1_BIT;
+      button = &button_1;
+      delay = &b1_press_delay;
+      wasup = &b1_was_up;
+      run++;
+      goto check;
+    }
+  else
+    goto ret;
+    
+ check:
+  if (ISCLEAR (BUTTON_PIN, bit))
+    {
+      (*delay)++;
+      if (*wasup && *delay >= BUTTON_CLICK_DELAY)
 	{
-	  button_0 = 1;
-	    b0_press_delay = 0;
-	    b0_was_up = 0;
+	  *button = 1;
+	    *delay = 0;
+	    *wasup = 0;
 	    goto exit;
 	}
-      else if (!b0_was_up)
+      else if (!*wasup)
 	{
-	  b0_was_up = 1;
-	  b0_press_delay = 0;
+	  *wasup = 1;
+	  *delay = 0;
 	  goto exit;
 	}
       else
 	goto exit;
     }
-  b0_was_up = 0;
-  b0_press_delay = 0;
+  *wasup = 0;
+  *delay = 0;
  exit:
+  goto run;
+ ret:
   return;
 }
 
@@ -277,20 +304,26 @@ fetch (void)
 int
 main (void)
 {
-  uint8_t choice = 0;
+  uint8_t choice = 0, choice1 = 0;
   char temp_format[] = "T %d: %2.1f C";
   char humid_format[] = "Fi %d: %2.1f %";
   char accel_format[] = "XYZ %d:%d:%d";
 
   configure ();
 
+  /* for debugging needs */
  /* tmploop: */
  /*  if (button_0) */
  /*    { */
  /*      choice++; */
  /*      button_0 = 0; */
  /*    } */
- /*  d_status_update ("%d", choice); */
+ /*  if (button_1) */
+ /*    { */
+ /*      choice1++; */
+ /*      button_1 = 0; */
+ /*    } */
+ /*  d_status_update ("%d %d", choice, choice1); */
  /*  d_update (); */
  /*  goto tmploop; */
   
