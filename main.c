@@ -150,10 +150,8 @@ configure (void)
   d_update ();
 }
 
-ISR (TIMER1_COMPA_vect)
+ISR (TIMER1_COMPA_vect, ISR_NOBLOCK)
 {
-  sei ();
-
   uptime_cnt++;
 
   if (uptime_cnt == 5)
@@ -168,11 +166,9 @@ ISR (TIMER1_COMPA_vect)
    <signal>      -------------
    <button state>-___-___-___-__________
  */
-ISR (TIMER0_OVF_vect)
+ISR (TIMER0_OVF_vect, ISR_NOBLOCK)
 {
   uint8_t bit, *button, *delay, *wasup, run = 0;
-  
-  sei ();
   
  run:
   if (!run)
@@ -224,10 +220,8 @@ ISR (TIMER0_OVF_vect)
   return;
 }
 
-ISR (TIMER2_OVF_vect)
+ISR (TIMER2_OVF_vect, ISR_BLOCK)
 {
-  cli ();
-
   usb_delay++;
 
   /* timer 2 overflows in ~13 msec, so we'll call usbPoll() each 26 msec, which is just fine */
