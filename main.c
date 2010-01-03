@@ -23,6 +23,7 @@
 #define BUTTON0_BIT PD3
 #define BUTTON1_PIN PIND
 #define BUTTON1_BIT PD4
+#define BUTTON_CLICK_DELAY 35
 
 #define VCC 5.05
 #define H_SENSORS 1
@@ -54,10 +55,6 @@ static uint8_t d_status_ch = 0, d_content_ch = 0;
 static uint16_t usb_delay = 0;
 /* usb data buffer */
 static unsigned char usbbuf[64];
-/* states of buttons */
-static uint8_t button_0 = 0, button_1 = 0;
-/* sb0, sb1; */
-static uint8_t b0_was_up = 0, b1_was_up = 0;
 /* number of detected temperature sensors, set in configure () */
 static uint8_t t_sensors_count = 0;
 /* temperature and humidity data */
@@ -65,11 +62,16 @@ static uint8_t t_sensors_count = 0;
 static double t_val[H_SENSORS], h_val[3]; 
 /* acceleration data */
 static int16_t accel[3];
-/* delay between repeated detection (when buttons are kept pressed) */
-static uint8_t b0_press_delay = 0, b1_press_delay = 0;
 /* uptime indicates, uh, uptime (in seconds). uptime_cnt is evil, don't touch it */
 static uint16_t uptime_cnt = 0, uptime = 0;
 /* enumeration of accel array contents ;) */
+/* delay between repeated detection (when buttons are kept pressed) */
+static uint8_t b0_press_delay = 0, b1_press_delay = 0;
+/* states of buttons */
+static uint8_t button_0 = 0, button_1 = 0;
+/* "was up" indication. shows if button was pressed at previous check */
+static uint8_t b0_was_up = 0, b1_was_up = 0;
+/* accelerometer vectors */
 enum xyz
 { X, Y, Z };
 
@@ -110,21 +112,26 @@ configure (void)
     d_content_update ("not found.");
   d_update ();
   _delay_ms (1000);
+  /* end if temperature sensors setup */
 
   /* configure timer 0 for button state detection */
   TIMSK0 = _BV (TOIE0);		/* enable overflow interrupt */
   TCCR0B = _BV (CS02) | _BV (CS00);	/* set prescaler to 1024, timer starts */
   PORTD |= _BV (PD3) | _BV (PD4);	/* pullup for button 0 */
+  /* end if button detection setup */
 
+  /* clock setup */
   TIMSK1 = _BV (OCIE1A);
   /* reaching this with a prescaler of 256 and frequency of 20Mhz five times is exactly one second */
   OCR1A = 15625;
   TCCR1B = _BV (CS12) | _BV (WGM12);
-
+  /* end of clock setup */
+  
   /* ADC configuration goes here */
   ADMUX = _BV (REFS0);
   ADCSRA = _BV (ADEN) | _BV (ADPS2) | _BV (ADPS1) | _BV (ADPS0);
   PORTC |= _BV (PC0) | _BV (PC1);
+  /* end of ADC configuration */
 
   /* twi/accelerometer configuration */
   i2c_init ();
@@ -135,6 +142,9 @@ configure (void)
     d_content_update ("found.");
   d_update ();
   _delay_ms (1000);
+  /* end of accelerometer configuration */
+
+  /* clear the display */
   d_content_update (" ");
   d_status_update (" ");
   d_update ();
@@ -153,51 +163,38 @@ ISR (TIMER1_COMPA_vect)
     }
 }
 
+/* button handling */
+/* meant to be working like this:
+   <signal>      -------------
+   <button state>-___-___-___-__________
+ */
 ISR (TIMER0_OVF_vect)
 {
   sei ();
 
-  /* button 0 */
-  if (!button_0 && b0_press_delay > 15)
+  if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
     {
-      if (!b0_was_up && ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
-	b0_was_up = 1;
-      else if (ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && b0_was_up)
+      b0_press_delay++;
+      if (b0_was_up && b0_press_delay >= BUTTON_CLICK_DELAY)
 	{
 	  button_0 = 1;
-	  b0_was_up = b0_press_delay = 0;
+	    b0_press_delay = 0;
+	    b0_was_up = 0;
+	    goto exit;
 	}
-      else if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT) && b0_was_up)
-	b0_was_up = 0;
-    }
-  else
-    {
-      if (!ISCLEAR (BUTTON0_PIN, BUTTON0_BIT))
-	button_0 = 0;
-      else
-	b0_press_delay++;
-    }
-  
-  /* button 1 */
-  if (!button_1 && b1_press_delay > 15)
-    {
-      if (!b1_was_up && ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
-	b1_was_up = 1;
-      else if (ISCLEAR (BUTTON1_PIN, BUTTON1_BIT) && b0_was_up)
+      else if (!b0_was_up)
 	{
-	  button_1 = 1;
-	  b1_was_up = b1_press_delay = 0;
+	  b0_was_up = 1;
+	  b0_press_delay = 0;
+	  goto exit;
 	}
-      else if (!ISCLEAR (BUTTON0_PIN, BUTTON1_BIT) && b1_was_up)
-	b1_was_up = 0;
-    }
-  else
-    {
-      if (!ISCLEAR (BUTTON1_PIN, BUTTON1_BIT))
-	button_1 = 0;
       else
-	b1_press_delay++;
+	goto exit;
     }
+  b0_was_up = 0;
+  b0_press_delay = 0;
+ exit:
+  return;
 }
 
 ISR (TIMER2_OVF_vect)
@@ -206,7 +203,7 @@ ISR (TIMER2_OVF_vect)
 
   usb_delay++;
 
-  /* timer 2 overflows in ~13 msec, so we'll call usbPoll() each 39 msec, which is just fine */
+  /* timer 2 overflows in ~13 msec, so we'll call usbPoll() each 26 msec, which is just fine */
   if (usb_delay == 2)
     {
       usbPoll ();
@@ -287,6 +284,16 @@ main (void)
 
   configure ();
 
+ /* tmploop: */
+ /*  if (button_0) */
+ /*    { */
+ /*      choice++; */
+ /*      button_0 = 0; */
+ /*    } */
+ /*  d_status_update ("%d", choice); */
+ /*  d_update (); */
+ /*  goto tmploop; */
+  
   /* not yet finished */
  mainloop:
   if (button_0)
