@@ -44,6 +44,7 @@
 #include <temperature.h>
 #include <i2cmaster.h>
 #include <lib302dl.h>
+#include "lib302dl/defines.h"
 
 /* display buffer */
 static char display[LCD_DISP_LENGTH * LCD_LINES + 2];
@@ -136,13 +137,15 @@ configure (void)
   /* twi/accelerometer configuration */
   i2c_init ();
   d_status_update ("Accelerometer:");
-  if (lis_initialize (0, 1, 0))
+  if (lis_initialize (0, 1, 1, 1))
     d_content_update ("not found.");
   else
     d_content_update ("found.");
   d_update ();
   _delay_ms (1000);
   /* end of accelerometer configuration */
+
+  adc_setup ();
 
   /* clear the display */
   d_content_update (" ");
@@ -289,7 +292,7 @@ fetch (void)
   for (i = 0; i <= t_sensors_count - 1; i++)
     t_val[i] = gtemp (i) / 10;
   for (i = 0; i <= H_SENSORS - 1; i++)
-    h_val[i] = mhumid (i) / 10;
+    h_val[i] = get_humidity (i) / 10;
   accel[X] = lis_rx ();
   accel[Y] = lis_ry ();
   accel[Z] = lis_rz ();
@@ -302,24 +305,25 @@ main (void)
   char temp_format[] = "T %d: %2.1f C";
   char humid_format[] = "Fi %d: %2.1f %";
   char accel_format[] = "XYZ %d:%d:%d";
-
+  uint32_t c;
+  
   configure ();
 
-  /* for debugging needs */
- /* tmploop: */
- /*  if (button_0) */
- /*    { */
- /*      choice++; */
- /*      button_0 = 0; */
- /*    } */
- /*  if (button_1) */
- /*    { */
- /*      choice1++; */
- /*      button_1 = 0; */
- /*    } */
- /*  d_status_update ("%d %d", choice, choice1); */
- /*  d_update (); */
- /*  goto tmploop; */
+  /* experimental vibration detection. yay! */
+ tmploop:
+  /* d_status_update ("%d %d %d", lis_rxa (), lis_rxa (), lis_rza ()); */
+  if (lis_rxa () != 0)
+    {
+      _delay_ms (20);
+      if (lis_rxa () != 0)
+	{
+	  c++;
+	  d_status_update ("%d", c);
+	  d_update ();
+	}
+    }
+  _delay_ms (50);
+  goto tmploop;
   
   /* not yet finished */
  mainloop:
@@ -328,7 +332,6 @@ main (void)
       choice++;
       button_0 = 0;
     }
-  /* d_status_update ("%d", choice); */
   fetch ();
   switch (choice)
     {

@@ -6,8 +6,7 @@ CFLAGS = -Os -mmcu=$(MCU) -Wl,-u,vfprintf -lprintf_flt -lm \
 -Wall -pedantic -std=c99
 INCLUDES = -Iusbdrv/ -I. -Ilib302dl/
 FILES = crc8.c ds18x20.c humidity.c lcd.c main.c onewire.c temperature.c \
-usbdrv/oddebug.c usbdrv/usbdrv.c usbdrv/usbdrvasm.S twimaster.c lib302dl/lib302dl.c \
-lib302dl/lib302dl_compat.c
+usbdrv/oddebug.c usbdrv/usbdrv.c usbdrv/usbdrvasm.S twimaster.c lib302dl/lib302dl.c
 DEFS = -DF_CPU=20000000UL -DOW_ONE_BUS -DLIS_SDO_HIGH
 AVRDUDE = avrdude
 
@@ -32,5 +31,5 @@ asm: $(FILES)
 
 clean:
 	@rm -f *.o main.elf main.hex
-flash:
+flash: all
 	@sudo $(AVRDUDE) -c usbasp -p m324p -U flash:w:main.hex
