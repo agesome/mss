@@ -23,7 +23,7 @@
 #define BUTTON_PIN PIND
 #define BUTTON0_BIT PD3
 #define BUTTON1_BIT PD4
-#define BUTTON_CLICK_DELAY 35
+#define BUTTON_CLICK_DELAY 30
 
 #define VCC 5.05
 #define H_SENSORS 1
@@ -290,9 +290,9 @@ fetch (void)
   uint8_t i;
 
   for (i = 0; i <= t_sensors_count - 1; i++)
-    t_val[i] = gtemp (i) / 10;
+    t_val[i] = (double) gtemp (i) / 10;
   for (i = 0; i <= H_SENSORS - 1; i++)
-    h_val[i] = get_humidity (i) / 10;
+    h_val[i] = (double) get_humidity (i) / 10;
   accel[X] = lis_rx ();
   accel[Y] = lis_ry ();
   accel[Z] = lis_rz ();
@@ -309,21 +309,27 @@ main (void)
   
   configure ();
 
+ /* tmploop_: */
+ /*  d_status_update ("%d", get_humidity (0)); */
+ /*  d_update (); */
+ /*  _delay_ms (100); */
+ /*  goto tmploop_; */
+
   /* experimental vibration detection. yay! */
- tmploop:
-  /* d_status_update ("%d %d %d", lis_rxa (), lis_rxa (), lis_rza ()); */
-  if (lis_rxa () != 0)
-    {
-      _delay_ms (20);
-      if (lis_rxa () != 0)
-	{
-	  c++;
-	  d_status_update ("%d", c);
-	  d_update ();
-	}
-    }
-  _delay_ms (50);
-  goto tmploop;
+ /* tmploop: */
+ /*  d_status_update ("XYZ %d %d %d", lis_rxa (), lis_rya (), lis_rza ()); */
+ /*  if (lis_rza () != 0) */
+ /*    { */
+ /*      _delay_ms (18); */
+ /*      if (lis_rza () != 0) */
+ /* 	{ */
+ /* 	  c++; */
+ /* 	  d_content_update ("%d", c); */
+ /* 	  d_update (); */
+ /* 	} */
+ /*    } */
+ /*  _delay_ms (150); */
+ /*  goto tmploop; */
   
   /* not yet finished */
  mainloop:
@@ -339,19 +345,19 @@ main (void)
     case 1:
       {
 	d_status_update ("Temperature");
-	d_content_update (temp_format, 1, (double) t_val[0]);
+	d_content_update (temp_format, choice + 1, (double) t_val[choice]);
 	break;
       }
     case 2:
       {
 	d_status_update ("Humidity");
-	d_content_update (humid_format, choice - 2, h_val[choice] - 2);
+	d_content_update (humid_format, choice - 1, h_val[choice] - 2);
 	break;
       }
     case 3:
       {
 	d_status_update ("Acceleration");
-	d_status_update (accel_format, accel[X], accel[Y], accel[Z]);
+	d_content_update (accel_format, accel[X], accel[Y], accel[Z]);
 	break;
       }
     case 4:
