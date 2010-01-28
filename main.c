@@ -16,8 +16,8 @@
 
 /*sensor to regulate temperature according to*/
 #define TEMP_REG_SENSOR 0
-#define TEMP_REG_PORT PORTA
-#define TEMP_REG_PIN PA4
+#define TEMP_REG_PORT PORTC
+#define TEMP_REG_PIN PC7
 
 /* buttons are on same port, that simplifies things. */
 #define BUTTON_PIN PIND
