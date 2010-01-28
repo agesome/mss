@@ -18,8 +18,6 @@
 #include <humidity.h>
 #include <util/delay.h>
 
-float u, relH, res;
-
 void
 adc_setup (void)
 {
@@ -30,20 +28,23 @@ adc_setup (void)
 uint16_t
 get_humidity (short pin)
 {
+  float voltage, r_humidity;
+  uint32_t resistance;
+  
   ADMUX |= pin;
   ADCSRA |= _BV (ADSC);
   _delay_ms (1);
-  u = (5.07 / 1024) * ADC;
-  res = (6000 * u) / (5.07 - u);
-
-  if (res >= 1000000)
-    relH = 30 - res / 529100;
-  else if (res >= 100000 && res <= 1000000)
-    relH = 48 - res / 50000;
-  else if (res <= 100000 && res >= 10000)
-    relH = 75 - res / 3333;
-  else if (res <= 10000 && res >= 200)
-    relH = 95 - res / 490;
-
-  return relH * 10;
+  voltage = (5.05 / 1024) * ADC;
+  resistance = (voltage * 1040000) / (5.05 - voltage);
+  
+  if (resistance >= 1000000)
+    r_humidity = 30 - resistance / 529100;
+  else if (resistance >= 100000 && resistance <= 1000000)
+    r_humidity = 48 - resistance / 50000;
+  else if (resistance <= 100000 && resistance >= 10000)
+    r_humidity = 75 - resistance / 3333;
+  else if (resistance <= 10000 && resistance >= 200)
+    r_humidity = 95 - resistance / 490;
+  
+  return r_humidity * 10;
 }
