@@ -17,6 +17,8 @@
 #include <avr/io.h>
 #include <humidity.h>
 #include <util/delay.h>
+/* interpolate. */
+#define IP(y, y0, x0, y1, x1) ((y - y0) * (x1 - x0)) / (y1 - y0) + x0
 
 void
 adc_setup (void)
@@ -25,10 +27,10 @@ adc_setup (void)
   ADCSRA |= _BV (ADPS2) | _BV (ADPS1) | _BV (ADPS0) | _BV (ADEN);
 }
 
-uint16_t
+uint8_t
 get_humidity (short pin)
 {
-  float voltage, r_humidity;
+  float voltage;
   uint32_t resistance;
   
   ADMUX |= pin;
@@ -36,15 +38,23 @@ get_humidity (short pin)
   _delay_ms (1);
   voltage = (5.05 / 1024) * ADC;
   resistance = (voltage * 1040000) / (5.05 - voltage);
-  
-  if (resistance >= 1000000)
-    r_humidity = 30 - resistance / 529100;
-  else if (resistance >= 100000 && resistance <= 1000000)
-    r_humidity = 48 - resistance / 50000;
-  else if (resistance <= 100000 && resistance >= 10000)
-    r_humidity = 75 - resistance / 3333;
-  else if (resistance <= 10000 && resistance >= 200)
-    r_humidity = 95 - resistance / 490;
-  
-  return r_humidity * 10;
+
+  if (resistance <= 5764705 && resistance >= 2588235)
+    return IP (resistance, 2588235, 27.27, 5764705, 22.72);
+  else if (resistance <= 2588235 && resistance >= 1000000)
+    return IP (resistance, 1000000, 30, 2588235, 27.27);
+  else if (resistance <= 1000000 && resistance >= 629411)
+    return IP (resistance, 629411, 37.27, 1000000, 30);
+  else if (resistance <= 629411 && resistance >= 100000)
+    return IP (resistance, 100000, 48.63, 629411, 37.27);
+  else if (resistance <= 100000 && resistance >= 84117)
+    return IP (resistance, 84117, 52.27, 100000, 48.63);
+  else if (resistance <= 84117 && resistance >= 47058)
+    return IP (resistance, 47058, 62.72, 84117, 52.27);
+  else if (resistance <= 47058 && resistance >= 10000)
+    return IP (resistance, 10000, 72.72, 47058, 62.72);
+  else if (resistance <= 10000 && resistance >= 3117)
+    return IP (resistance, 3117, 92.72, 10000, 72.72);
+  /* we're dead anyway, so who cares. */
+  return 0;
 }
