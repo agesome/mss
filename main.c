@@ -1,4 +1,4 @@
-/* Copyright 2009 Evgeny Grablyk <evgeny.grablyk@gmail.com>
+/* Copyright 2010 Evgeny Grablyk <evgeny.grablyk@gmail.com>
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 /*sensor to regulate temperature according to*/
 #define TEMP_REG_SENSOR 0
 #define TEMP_REG_PORT PORTC
-#define TEMP_REG_PIN PC7
+#define TEMP_REG_PIN _BV(PC7)
 
 /* buttons are on same port, that simplifies things. */
 #define BUTTON_PIN PIND
@@ -25,8 +25,8 @@
 #define BUTTON1_BIT PD4
 #define BUTTON_CLICK_DELAY 30
 
-#define VCC 5.05
-#define H_SENSORS 1
+#define H_SENSORS 2
+#define T_MAXSENSORS 3
 #define B_PRESS_DELAY 13
 
 /* A is the port, B is the pin to check */
@@ -55,12 +55,13 @@ static uint8_t d_status_ch = 0, d_content_ch = 0;
 /* delay between usbPoll () calls */
 static uint16_t usb_delay = 0;
 /* usb data buffer */
-static unsigned char usbbuf[64];
+static unsigned char* usbbuf;
 /* number of detected temperature sensors, set in configure () */
 static uint8_t t_sensors_count = 0;
 /* temperature and humidity data */
-/* number of sensors is unknown at compile time, so just pick some. */
-static double t_val[H_SENSORS], h_val[3]; 
+/* number of sensors is unknown at compile time, so just pick some number. */
+static double t_val[T_MAXSENSORS];
+static uint8_t h_val[H_SENSORS];
 /* acceleration data */
 static int16_t accel[3];
 /* uptime indicates, uh, uptime (in seconds). uptime_cnt is evil, don't touch it */
@@ -75,6 +76,8 @@ static uint8_t b0_was_up = 0, b1_was_up = 0;
 /* accelerometer vectors */
 enum xyz
 { X, Y, Z };
+/* number of taps detected by accelerometer */
+static uint16_t accel_taps = 0;
 
 void d_update (void);
 void d_status_update (char *content, ...);
@@ -166,8 +169,8 @@ ISR (TIMER1_COMPA_vect, ISR_NOBLOCK)
 
 /* button handling */
 /* meant to be working like this:
-   <signal>      -------------
-   <button state>-___-___-___-__________
+   <signal>       -------------
+   <button state> -___-___-___-
  */
 ISR (TIMER0_OVF_vect, ISR_NOBLOCK)
 {
@@ -291,8 +294,10 @@ fetch (void)
 
   for (i = 0; i <= t_sensors_count - 1; i++)
     t_val[i] = (double) gtemp (i) / 10;
-  for (i = 0; i <= H_SENSORS - 1; i++)
-    h_val[i] = (double) get_humidity (i) / 10;
+  /* for (i = 0; i <= H_SENSORS - 1; i++) */
+    /* h_val[i] = get_humidity (i); */
+  /* temporary simplification */
+  h_val[0] = get_humidity (0);
   accel[X] = lis_rx ();
   accel[Y] = lis_ry ();
   accel[Z] = lis_rz ();
@@ -303,42 +308,21 @@ main (void)
 {
   uint8_t choice = 0, choice1 = 0;
   char temp_format[] = "T %d: %2.1f C";
-  char humid_format[] = "Fi %d: %2.1f %";
+  char humid_format[] = "Fi %d: %d %";
   char accel_format[] = "XYZ %d:%d:%d";
-  uint32_t c;
+
+  int16_t keep_temp = 18, already_set = 0;
   
   configure ();
-
- /* tmploop_: */
- /*  d_status_update ("%d", get_humidity (0)); */
- /*  d_update (); */
- /*  _delay_ms (100); */
- /*  goto tmploop_; */
-
-  /* experimental vibration detection. yay! */
- /* tmploop: */
- /*  d_status_update ("XYZ %d %d %d", lis_rxa (), lis_rya (), lis_rza ()); */
- /*  if (lis_rza () != 0) */
- /*    { */
- /*      _delay_ms (18); */
- /*      if (lis_rza () != 0) */
- /* 	{ */
- /* 	  c++; */
- /* 	  d_content_update ("%d", c); */
- /* 	  d_update (); */
- /* 	} */
- /*    } */
- /*  _delay_ms (150); */
- /*  goto tmploop; */
-  
+    
   /* not yet finished */
  mainloop:
+  fetch ();
   if (button_0)
     {
       choice++;
       button_0 = 0;
     }
-  fetch ();
   switch (choice)
     {
     case 0:
@@ -351,7 +335,7 @@ main (void)
     case 2:
       {
 	d_status_update ("Humidity");
-	d_content_update (humid_format, choice - 1, h_val[choice] - 2);
+	d_content_update (humid_format, choice - 1, h_val[choice - 2]);
 	break;
       }
     case 3:
@@ -362,22 +346,60 @@ main (void)
       }
     case 4:
       {
+	if (button_1)
+	  {
+	    keep_temp++;
+	    button_1 = 0;
+	  }
+	d_status_update ("Temp.: %d", (int) t_val[TEMP_REG_SENSOR]);
+	d_content_update ("%d", keep_temp);
+	break;
+      }
+    case 5:
+      goto taploop;
+    case 6:
+      {
 	choice = 0;
 	break;
       }
+
+    }
+  if ((int) t_val[TEMP_REG_SENSOR] < keep_temp)
+    {
+      TEMP_REG_PORT |= TEMP_REG_PIN;
+    }
+  else
+    {
+      TEMP_REG_PORT &= ~TEMP_REG_PIN;
     }
   d_update ();
   _delay_ms (30);
   goto mainloop;
+
+  /* experimental vibration detection. yay! */
+ taploop:
+  d_status_update ("XYZ %d %d %d", lis_rxa (), lis_rya (), lis_rza ());
+  if (lis_rza () != 0)
+    {
+      _delay_ms (18);
+      if (lis_rza () != 0)
+  	{
+  	  c++;
+  	  d_content_update ("%d", c);
+  	  d_update ();
+  	}
+    }
+  if (button_0)
+    {
+      button_0 = 0;
+      choice++;
+      goto mainloop;
+    }
+  _delay_ms (50);
+  goto taploop;
 }
 
 usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
-  double t = t_val[0];
-  memcpy (usbbuf, (void *) &t, sizeof (t));
-  /* memcpy(usbbuf + sizeof(t_val[0]), (void *)&h_val[0], sizeof(h_val[0])); */
-  usbbuf[sizeof (t) + 1] = '\0';	//+ sizeof(h_val[0]) + 1] = '\0';
-  usbMsgPtr = usbbuf;
-  return strlen ((char *) usbbuf);
 }
