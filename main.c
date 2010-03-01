@@ -36,6 +36,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <lcd.h>
@@ -54,13 +55,11 @@ static char *d_status, *d_content;
 static uint8_t d_status_ch = 0, d_content_ch = 0;
 /* delay between usbPoll () calls */
 static uint16_t usb_delay = 0;
-/* usb data buffer */
-static unsigned char* usbbuf;
 /* number of detected temperature sensors, set in configure () */
 static uint8_t t_sensors_count = 0;
 /* temperature and humidity data */
 /* number of sensors is unknown at compile time, so just pick some number. */
-static double t_val[T_MAXSENSORS];
+static float t_val[T_MAXSENSORS];
 static uint8_t h_val[H_SENSORS];
 /* acceleration data */
 static int16_t accel[3];
@@ -78,6 +77,8 @@ enum xyz
 { X, Y, Z };
 /* number of taps detected by accelerometer */
 static uint16_t accel_taps = 0;
+/* sensor presence indication */
+static uint8_t have_ts = 0, have_ac = 0;
 
 void d_update (void);
 void d_status_update (char *content, ...);
@@ -111,7 +112,10 @@ configure (void)
   t_sensors_count = search_sensors ();
   d_status_update ("Temp. sensors:");
   if (t_sensors_count)
-    d_content_update ("%d found.", t_sensors_count);
+    {
+      d_content_update ("%d found.", t_sensors_count);
+      have_ts = 1;
+    }
   else
     d_content_update ("not found.");
   d_update ();
@@ -143,7 +147,10 @@ configure (void)
   if (lis_initialize (0, 1, 1, 1))
     d_content_update ("not found.");
   else
-    d_content_update ("found.");
+    {
+      d_content_update ("found.");
+      have_ac = 1;
+    }
   d_update ();
   _delay_ms (1000);
   /* end of accelerometer configuration */
@@ -292,26 +299,30 @@ fetch (void)
 {
   uint8_t i;
 
-  for (i = 0; i <= t_sensors_count - 1; i++)
-    t_val[i] = (double) gtemp (i) / 10;
-  /* for (i = 0; i <= H_SENSORS - 1; i++) */
-    /* h_val[i] = get_humidity (i); */
-  /* temporary simplification */
-  h_val[0] = get_humidity (0);
-  accel[X] = lis_rx ();
-  accel[Y] = lis_ry ();
-  accel[Z] = lis_rz ();
+  if (have_ts)
+    {
+      for (i = 0; i <= t_sensors_count - 1; i++)
+	t_val[i] = (float) gtemp (i) / 10;
+    }
+  for (i = 0; i <= H_SENSORS - 1; i++)
+    h_val[i] = get_humidity (i);
+  if (have_ac)
+    {
+      accel[X] = lis_rx ();
+      accel[Y] = lis_ry ();
+      accel[Z] = lis_rz ();
+    }
 }
 
 int
 main (void)
 {
-  uint8_t choice = 0, choice1 = 0;
+  uint8_t choice = 0;
   char temp_format[] = "T %d: %2.1f C";
   char humid_format[] = "Fi %d: %d %";
   char accel_format[] = "XYZ %d:%d:%d";
 
-  int16_t keep_temp = 18, already_set = 0;
+  int16_t keep_temp = 18;
   
   configure ();
     
@@ -384,8 +395,8 @@ main (void)
       _delay_ms (18);
       if (lis_rza () != 0)
   	{
-  	  c++;
-  	  d_content_update ("%d", c);
+  	  accel_taps++;
+  	  d_content_update ("%d", accel_taps);
   	  d_update ();
   	}
     }
@@ -402,4 +413,9 @@ main (void)
 usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
+  volatile uint32_t temp;
+
+  temp = t_val[0] * 10;
+  usbMsgPtr = (unsigned char *) &temp;
+  return sizeof (uint32_t);
 }
