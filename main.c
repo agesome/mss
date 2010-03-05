@@ -25,7 +25,7 @@
 #define BUTTON1_BIT PD4
 #define BUTTON_CLICK_DELAY 30
 
-#define H_SENSORS 2
+#define H_SENSORS 1
 #define T_MAXSENSORS 3
 #define B_PRESS_DELAY 13
 
@@ -308,9 +308,9 @@ fetch (void)
     h_val[i] = get_humidity (i);
   if (have_ac)
     {
-      accel[X] = lis_rx ();
-      accel[Y] = lis_ry ();
-      accel[Z] = lis_rz ();
+      accel[X] = lis_rxa ();
+      accel[Y] = lis_rya ();
+      accel[Z] = lis_rza ();
     }
 }
 
@@ -410,12 +410,36 @@ main (void)
   goto taploop;
 }
 
+/*
+  message format:
+  0 byte: [0: temperature-present][1: accelerometer-present][2-7: number of t. sensors]
+  [temperature data] <int16_t>
+  [humidity data] <uin8_t> <number of h.sensors is assumed 1 for now>
+  //[acceleration values (3)] <int16_t> - not transmitted so far.
+*/
 usbMsgLen_t
 usbFunctionSetup (unsigned char setupData[8])
 {
-  volatile uint32_t temp;
+  uint8_t i;
+  /* buf *shouldn't* be any greater than that. may need fixing anyway. */
+  volatile unsigned char zbyte = 0, buf[128], *p;
 
-  temp = t_val[0] * 10;
-  usbMsgPtr = (unsigned char *) &temp;
-  return sizeof (uint32_t);
+  zbyte = have_ts;
+  zbyte |= have_ac << 1;
+  zbyte |= t_sensors_count << 2;
+  buf[0] = zbyte;
+  p = buf + 1;
+
+  for (i = 0; i < t_sensors_count; i++)
+    {
+      *p = (int16_t) t_val[i] * 10;
+      p += sizeof (int16_t);
+    }
+  /* there's just one sensor anyway */
+  *p = (uint8_t) h_val[0];
+  p += sizeof (uint8_t);
+  *p = '\0';
+  usbMsgPtr = buf;
+  
+  return p - buf;
 }
