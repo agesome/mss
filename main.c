@@ -423,22 +423,23 @@ usbFunctionSetup (unsigned char setupData[8])
   uint8_t i;
   /* buf *shouldn't* be any greater than that. may need fixing anyway. */
   volatile unsigned char zbyte = 0, buf[128], *p;
+  volatile int16_t *ptr;
 
   zbyte = have_ts;
   zbyte |= have_ac << 1;
   zbyte |= t_sensors_count << 2;
   buf[0] = zbyte;
-  p = buf + 1;
 
+  ptr = (int16_t *) (buf + 1);
   for (i = 0; i < t_sensors_count; i++)
     {
-      *p = (int16_t) t_val[i] * 10;
-      p += sizeof (int16_t);
+      *ptr = (int16_t) (t_val[i] * 10);
+      ptr++;
     }
   /* there's just one sensor anyway */
+  p = (unsigned char *) ptr;
   *p = (uint8_t) h_val[0];
-  p += sizeof (uint8_t);
-  *p = '\0';
+  p++;
   usbMsgPtr = buf;
   
   return p - buf;
