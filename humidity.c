@@ -20,19 +20,12 @@
 /* interpolate. */
 #define IP(y, y0, x0, y1, x1) ((y - y0) * (x1 - x0)) / (y1 - y0) + x0
 
-void
-adc_setup (void)
-{
-  ADMUX |= _BV (REFS0);
-  ADCSRA |= _BV (ADPS2) | _BV (ADPS1) | _BV (ADPS0) | _BV (ADEN);
-}
-
 uint8_t
 get_humidity (short pin)
 {
   float voltage;
   uint32_t resistance;
-  
+
   ADMUX |= pin;
   ADCSRA |= _BV (ADSC);
   _delay_ms (1);

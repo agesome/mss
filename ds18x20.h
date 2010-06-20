@@ -58,7 +58,7 @@
 #define DS18X20_WRITE_SCRATCHPAD  0x4E
 #define DS18X20_COPY_SCRATCHPAD   0x48
 #define DS18X20_RECALL_E2         0xB8
-#define DS18X20_COPYSP_DELAY      10	/* ms */
+#define DS18X20_COPYSP_DELAY      10    /* ms */
 #define DS18X20_TH_REG      2
 #define DS18X20_TL_REG      3
 
@@ -67,14 +67,14 @@ extern void DS18X20_find_sensor (uint8_t * diff, uint8_t id[]);
 extern uint8_t DS18X20_get_power_status (uint8_t id[]);
 extern uint8_t DS18X20_start_meas (uint8_t with_external, uint8_t id[]);
 extern uint8_t DS18X20_read_meas (uint8_t id[], uint8_t * subzero,
-				  uint8_t * cel, uint8_t * cel_frac_bits);
+                                  uint8_t * cel, uint8_t * cel_frac_bits);
 extern uint8_t DS18X20_read_meas_single (uint8_t familycode,
-					 uint8_t * subzero, uint8_t * cel,
-					 uint8_t * cel_frac_bits);
+                                         uint8_t * subzero, uint8_t * cel,
+                                         uint8_t * cel_frac_bits);
 extern uint8_t DS18X20_meas_to_cel (uint8_t fc, uint8_t * sp,
-				    uint8_t * subzero, uint8_t * cel,
-				    uint8_t * cel_frac_bits);
+                                    uint8_t * subzero, uint8_t * cel,
+                                    uint8_t * cel_frac_bits);
 extern uint16_t DS18X20_temp_to_decicel (uint8_t subzero, uint8_t cel,
-					 uint8_t cel_frac_bits);
+                                         uint8_t cel_frac_bits);
 
 #endif /*  */

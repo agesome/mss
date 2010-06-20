@@ -32,12 +32,12 @@
 /*
 ** constants/macros
 */
-#define DDR(x) (*(&x - 1))	/* address of data direction register of port x */
+#define DDR(x) (*(&x - 1))      /* address of data direction register of port x */
 #if defined(__AVR_ATmega64__) || defined(__AVR_ATmega128__)
   /* on ATmega64/128 PINF is on port 0x00 and not 0x60 */
 #define PIN(x) ( &PORTF==&(x) ? _SFR_IO8(0x00) : (*(&x - 2)) )
 #else /*  */
-#define PIN(x) (*(&x - 2))	/* address of input register of port x          */
+#define PIN(x) (*(&x - 2))      /* address of input register of port x          */
 #endif /*  */
 
 #if LCD_IO_MODE
@@ -68,9 +68,9 @@
 #if LCD_CONTROLLER_KS0073
 #if LCD_LINES==4
 
-#define KS0073_EXTENDED_FUNCTION_REGISTER_ON  0x24	/* |0|010|0100 4-bit mode extension-bit RE = 1 */
-#define KS0073_EXTENDED_FUNCTION_REGISTER_OFF 0x20	/* |0|000|1001 4 lines mode */
-#define KS0073_4LINES_MODE                    0x09	/* |0|001|0000 4-bit mode, extension-bit RE = 0 */
+#define KS0073_EXTENDED_FUNCTION_REGISTER_ON  0x24      /* |0|010|0100 4-bit mode extension-bit RE = 1 */
+#define KS0073_EXTENDED_FUNCTION_REGISTER_OFF 0x20      /* |0|000|1001 4 lines mode */
+#define KS0073_4LINES_MODE                    0x09      /* |0|001|0000 4-bit mode, extension-bit RE = 0 */
 
 #endif /*  */
 #endif /*  */
@@ -111,11 +111,11 @@ lcd_write (uint8_t data, uint8_t rs)
 {
   unsigned char dataBits;
   if (rs)
-    {				/* write data        (RS=1, RW=0) */
+    {                           /* write data        (RS=1, RW=0) */
       lcd_rs_high ();
     }
   else
-    {				/* write instruction (RS=0, RW=0) */
+    {                           /* write instruction (RS=0, RW=0) */
       lcd_rs_low ();
     }
   lcd_rw_low ();
@@ -158,13 +158,13 @@ lcd_write (uint8_t data, uint8_t rs)
       LCD_DATA1_PORT &= ~_BV (LCD_DATA1_PIN);
       LCD_DATA0_PORT &= ~_BV (LCD_DATA0_PIN);
       if (data & 0x80)
-	LCD_DATA3_PORT |= _BV (LCD_DATA3_PIN);
+        LCD_DATA3_PORT |= _BV (LCD_DATA3_PIN);
       if (data & 0x40)
-	LCD_DATA2_PORT |= _BV (LCD_DATA2_PIN);
+        LCD_DATA2_PORT |= _BV (LCD_DATA2_PIN);
       if (data & 0x20)
-	LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);
+        LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);
       if (data & 0x10)
-	LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);
+        LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);
       lcd_e_toggle ();
 
       /* output low nibble */
@@ -173,13 +173,13 @@ lcd_write (uint8_t data, uint8_t rs)
       LCD_DATA1_PORT &= ~_BV (LCD_DATA1_PIN);
       LCD_DATA0_PORT &= ~_BV (LCD_DATA0_PIN);
       if (data & 0x08)
-	LCD_DATA3_PORT |= _BV (LCD_DATA3_PIN);
+        LCD_DATA3_PORT |= _BV (LCD_DATA3_PIN);
       if (data & 0x04)
-	LCD_DATA2_PORT |= _BV (LCD_DATA2_PIN);
+        LCD_DATA2_PORT |= _BV (LCD_DATA2_PIN);
       if (data & 0x02)
-	LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);
+        LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);
       if (data & 0x01)
-	LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);
+        LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);
       lcd_e_toggle ();
 
       /* all data pins high (inactive) */
@@ -209,26 +209,26 @@ lcd_read (uint8_t rs)
 {
   uint8_t data;
   if (rs)
-    lcd_rs_high ();		/* RS=1: read data      */
+    lcd_rs_high ();             /* RS=1: read data      */
 
   else
-    lcd_rs_low ();		/* RS=0: read busy flag */
-  lcd_rw_high ();		/* RW=1  read mode      */
+    lcd_rs_low ();              /* RS=0: read busy flag */
+  lcd_rw_high ();               /* RW=1  read mode      */
   if ((&LCD_DATA0_PORT == &LCD_DATA1_PORT)
       && (&LCD_DATA1_PORT == &LCD_DATA2_PORT)
       && (&LCD_DATA2_PORT == &LCD_DATA3_PORT) && (LCD_DATA0_PIN == 0)
       && (LCD_DATA1_PIN == 1) && (LCD_DATA2_PIN == 2) && (LCD_DATA3_PIN == 3))
 
     {
-      DDR (LCD_DATA0_PORT) &= 0xF0;	/* configure data pins as input */
+      DDR (LCD_DATA0_PORT) &= 0xF0;     /* configure data pins as input */
       lcd_e_high ();
       lcd_e_delay ();
-      data = PIN (LCD_DATA0_PORT) << 4;	/* read high nibble first */
+      data = PIN (LCD_DATA0_PORT) << 4; /* read high nibble first */
       lcd_e_low ();
-      lcd_e_delay ();		/* Enable 500ns low       */
+      lcd_e_delay ();           /* Enable 500ns low       */
       lcd_e_high ();
       lcd_e_delay ();
-      data |= PIN (LCD_DATA0_PORT) & 0x0F;	/* read low nibble        */
+      data |= PIN (LCD_DATA0_PORT) & 0x0F;      /* read low nibble        */
       lcd_e_low ();
     }
 
@@ -247,27 +247,27 @@ lcd_read (uint8_t rs)
       lcd_e_delay ();
       data = 0;
       if (PIN (LCD_DATA0_PORT) & _BV (LCD_DATA0_PIN))
-	data |= 0x10;
+        data |= 0x10;
       if (PIN (LCD_DATA1_PORT) & _BV (LCD_DATA1_PIN))
-	data |= 0x20;
+        data |= 0x20;
       if (PIN (LCD_DATA2_PORT) & _BV (LCD_DATA2_PIN))
-	data |= 0x40;
+        data |= 0x40;
       if (PIN (LCD_DATA3_PORT) & _BV (LCD_DATA3_PIN))
-	data |= 0x80;
+        data |= 0x80;
       lcd_e_low ();
-      lcd_e_delay ();		/* Enable 500ns low       */
+      lcd_e_delay ();           /* Enable 500ns low       */
 
       /* read low nibble */
       lcd_e_high ();
       lcd_e_delay ();
       if (PIN (LCD_DATA0_PORT) & _BV (LCD_DATA0_PIN))
-	data |= 0x01;
+        data |= 0x01;
       if (PIN (LCD_DATA1_PORT) & _BV (LCD_DATA1_PIN))
-	data |= 0x02;
+        data |= 0x02;
       if (PIN (LCD_DATA2_PORT) & _BV (LCD_DATA2_PIN))
-	data |= 0x04;
+        data |= 0x04;
       if (PIN (LCD_DATA3_PORT) & _BV (LCD_DATA3_PIN))
-	data |= 0x08;
+        data |= 0x08;
       lcd_e_low ();
     }
   return data;
@@ -297,8 +297,8 @@ lcd_waitbusy (void)
   _delay_us (2);
 
   /* now read the address counter */
-  return (lcd_read (0));	// return address counter
-}				/* lcd_waitbusy */
+  return (lcd_read (0));        // return address counter
+}                               /* lcd_waitbusy */
 
 
 /*************************************************************************
@@ -352,7 +352,7 @@ lcd_newline (uint8_t pos)
 #endif /*  */
 #endif /*  */
   lcd_command ((1 << LCD_DDRAM) + addressCounter);
-}				/* lcd_newline */
+}                               /* lcd_newline */
 
 
 /*
@@ -415,11 +415,11 @@ lcd_gotoxy (uint8_t x, uint8_t y)
   else if (y == 2)
     lcd_command ((1 << LCD_DDRAM) + LCD_START_LINE3 + x);
 
-  else				/* y==3 */
+  else                          /* y==3 */
     lcd_command ((1 << LCD_DDRAM) + LCD_START_LINE4 + x);
 
 #endif /*  */
-}				/* lcd_gotoxy */
+}                               /* lcd_gotoxy */
 
 
 /*************************************************************************
@@ -458,7 +458,7 @@ void
 lcd_putc (char c)
 {
   uint8_t pos;
-  pos = lcd_waitbusy ();	// read busy-flag and address counter
+  pos = lcd_waitbusy ();        // read busy-flag and address counter
   if (c == '\n')
 
     {
@@ -472,37 +472,37 @@ lcd_putc (char c)
 #if LCD_WRAP_LINES==1
 #if LCD_LINES==1
       if (pos == LCD_START_LINE1 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
+        }
 
 #elif LCD_LINES==2
       if (pos == LCD_START_LINE1 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE2, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE2, 0);
+        }
       else if (pos == LCD_START_LINE2 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
+        }
 
 #elif LCD_LINES==4
       if (pos == LCD_START_LINE1 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE2, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE2, 0);
+        }
       else if (pos == LCD_START_LINE2 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE3, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE3, 0);
+        }
       else if (pos == LCD_START_LINE3 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE4, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE4, 0);
+        }
       else if (pos == LCD_START_LINE4 + LCD_DISP_LENGTH)
-	{
-	  lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
-	}
+        {
+          lcd_write ((1 << LCD_DDRAM) + LCD_START_LINE1, 0);
+        }
 
 #endif /*  */
       lcd_waitbusy ();
@@ -510,7 +510,7 @@ lcd_putc (char c)
 #endif /*  */
       lcd_write (c, 1);
     }
-}				/* lcd_putc */
+}                               /* lcd_putc */
 
 
 /*************************************************************************
@@ -527,7 +527,7 @@ lcd_puts (const char *s)
     {
       lcd_putc (c);
     }
-}				/* lcd_puts */
+}                               /* lcd_puts */
 
 
 /*************************************************************************
@@ -544,7 +544,7 @@ lcd_puts_p (const char *progmem_s)
     {
       lcd_putc (c);
     }
-}				/* lcd_puts_p */
+}                               /* lcd_puts_p */
 
 
 /*************************************************************************
@@ -565,7 +565,7 @@ lcd_init (uint8_t dispAttr)
   if ((&LCD_DATA0_PORT == &LCD_DATA1_PORT)
       && (&LCD_DATA1_PORT == &LCD_DATA2_PORT)
       && (&LCD_DATA2_PORT == &LCD_DATA3_PORT) && (&LCD_RS_PORT ==
-						  &LCD_DATA0_PORT)
+                                                  &LCD_DATA0_PORT)
       && (&LCD_RW_PORT == &LCD_DATA0_PORT)
       && (&LCD_E_PORT == &LCD_DATA0_PORT) && (LCD_DATA0_PIN == 0)
       && (LCD_DATA1_PIN == 1) && (LCD_DATA2_PIN == 2)
@@ -579,10 +579,10 @@ lcd_init (uint8_t dispAttr)
     }
 
   else if ((&LCD_DATA0_PORT == &LCD_DATA1_PORT)
-	   && (&LCD_DATA1_PORT == &LCD_DATA2_PORT)
-	   && (&LCD_DATA2_PORT == &LCD_DATA3_PORT) && (LCD_DATA0_PIN == 0)
-	   && (LCD_DATA1_PIN == 1) && (LCD_DATA2_PIN == 2)
-	   && (LCD_DATA3_PIN == 3))
+           && (&LCD_DATA1_PORT == &LCD_DATA2_PORT)
+           && (&LCD_DATA2_PORT == &LCD_DATA3_PORT) && (LCD_DATA0_PIN == 0)
+           && (LCD_DATA1_PIN == 1) && (LCD_DATA2_PIN == 2)
+           && (LCD_DATA3_PIN == 3))
 
     {
 
@@ -606,29 +606,29 @@ lcd_init (uint8_t dispAttr)
       DDR (LCD_DATA2_PORT) |= _BV (LCD_DATA2_PIN);
       DDR (LCD_DATA3_PORT) |= _BV (LCD_DATA3_PIN);
     }
-  _delay_us (16000);		/* wait 16ms or more after power-on       */
+  _delay_us (16000);            /* wait 16ms or more after power-on       */
 
   /* initial write to lcd is 8bit */
-  LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);	// _BV(LCD_FUNCTION)>>4;
-  LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);	// _BV(LCD_FUNCTION_8BIT)>>4;
+  LCD_DATA1_PORT |= _BV (LCD_DATA1_PIN);        // _BV(LCD_FUNCTION)>>4;
+  LCD_DATA0_PORT |= _BV (LCD_DATA0_PIN);        // _BV(LCD_FUNCTION_8BIT)>>4;
   lcd_e_toggle ();
-  _delay_us (4992);		/* _delay_us, busy flag can't be checked here */
+  _delay_us (4992);             /* _delay_us, busy flag can't be checked here */
 
   /* repeat last command */
   lcd_e_toggle ();
-  _delay_us (64);		/* _delay_us, busy flag can't be checked here */
+  _delay_us (64);               /* _delay_us, busy flag can't be checked here */
 
   /* repeat last command a third time */
   lcd_e_toggle ();
-  _delay_us (64);		/* _delay_us, busy flag can't be checked here */
+  _delay_us (64);               /* _delay_us, busy flag can't be checked here */
 
   /* now configure for 4bit mode */
-  LCD_DATA0_PORT &= ~_BV (LCD_DATA0_PIN);	// LCD_FUNCTION_4BIT_1LINE>>4
+  LCD_DATA0_PORT &= ~_BV (LCD_DATA0_PIN);       // LCD_FUNCTION_4BIT_1LINE>>4
   lcd_e_toggle ();
-  _delay_us (64);		/* some displays need this additional delay */
+  _delay_us (64);               /* some displays need this additional delay */
 
-  lcd_command (LCD_DISP_OFF);	/* display off                  */
-  lcd_clrscr ();		/* display clear                */
-  lcd_command (LCD_MODE_DEFAULT);	/* set entry mode               */
-  lcd_command (dispAttr);	/* display/cursor control       */
-}				/* lcd_init */
+  lcd_command (LCD_DISP_OFF);   /* display off                  */
+  lcd_clrscr ();                /* display clear                */
+  lcd_command (LCD_MODE_DEFAULT);       /* set entry mode               */
+  lcd_command (dispAttr);       /* display/cursor control       */
+}                               /* lcd_init */

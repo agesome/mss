@@ -77,13 +77,13 @@
  @endcode
 
 */ 
-#endif	/* DOXYGEN */
+#endif  /* DOXYGEN */
   
 /**@{*/ 
   
 #if (__GNUC__ * 100 + __GNUC_MINOR__) < 304
 #error "This library requires AVR-GCC 3.4 or later, update to newer AVR-GCC compiler !"
-#endif	/*  */
+#endif /*  */
   
 #include <avr/io.h>
   
@@ -168,4 +168,4 @@ extern unsigned char i2c_read (unsigned char ack);
 #define i2c_read(ack)  (ack) ? i2c_readAck() : i2c_readNak(); 
   
 /**@}*/ 
-#endif	/*  */
+#endif /*  */
