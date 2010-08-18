@@ -1,3 +1,5 @@
-MSS is a project to create a device that would support different kinds of operation on data from multiple sensors. (Multi Sensor Station).
+MSS is a project to create a device that would support acquisition and transmission of [environmental] data from multiple sensors. (Multi Sensor Station)
 
 This directory contains project's firmware code. See COPYING file for license details.
+
+Discontinued as of 20 Aug 2010.
